@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CashCompass - Smart Monthly Budget Planner</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Chart.js & Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body class="min-h-screen bg-slate-50/60 text-slate-800 flex flex-col justify-between">
+
+  <!-- TOP NAVIGATION HEADER -->
+  <header class="sticky top-0 z-30 glass-header">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 sm:h-20 gap-4">
+        
+        <!-- App Logo & Title -->
+        <div class="flex items-center space-x-3 shrink-0">
+          <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-emerald-400 flex items-center justify-center text-white shadow-md shadow-indigo-200">
+            <i class="fa-solid fa-chart-pie text-lg sm:text-xl"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-lg sm:text-xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 to-indigo-900 bg-clip-text text-transparent">CashCompass</span>
+              <span class="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">Smart Budget</span>
+            </div>
+            <p class="text-xs text-slate-500 hidden sm:block">Cash Flow Intelligence & Advisor</p>
+          </div>
+        </div>
+
+        <!-- Month Navigation Switcher -->
+        <div class="flex items-center bg-slate-100/80 p-1 sm:p-1.5 rounded-2xl border border-slate-200/80 shadow-inner">
+          <button id="prevMonthBtn" class="p-1.5 sm:p-2 text-slate-500 hover:text-slate-900 hover:bg-white rounded-xl transition-all shadow-none hover:shadow-sm" title="Previous Month">
+            <i class="fa-solid fa-chevron-left text-xs sm:text-sm"></i>
+          </button>
+          
+          <div class="relative px-2 sm:px-4 text-center cursor-pointer group">
+            <span id="currentMonthDisplay" class="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">October 2026</span>
+            <input type="month" id="monthPickerInput" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+          </div>
+
+          <button id="nextMonthBtn" class="p-1.5 sm:p-2 text-slate-500 hover:text-slate-900 hover:bg-white rounded-xl transition-all shadow-none hover:shadow-sm" title="Next Month">
+            <i class="fa-solid fa-chevron-right text-xs sm:text-sm"></i>
+          </button>
+        </div>
+
+        <!-- Right Action Tools -->
+        <div class="flex items-center space-x-2 sm:space-x-3 shrink-0">
+          
+          <!-- Currency Selector -->
+          <div class="relative">
+            <select id="currencySelector" class="appearance-none bg-white text-xs sm:text-sm font-semibold text-slate-700 pl-3 pr-8 py-2 rounded-xl border border-slate-200 shadow-sm hover:border-slate-300 focus:border-indigo-500 transition-all cursor-pointer">
+              <!-- Dynamically populated -->
+            </select>
+            <i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none"></i>
+          </div>
+
+          <!-- Quick Action: Demo Data -->
+          <button id="loadDemoBtn" class="hidden md:inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200/80 transition-all shadow-sm" title="Pre-fill with realistic budget example">
+            <i class="fa-solid fa-wand-magic-sparkles text-indigo-600"></i>
+            <span>Load Demo</span>
+          </button>
+
+          <!-- Copy Prev Month -->
+          <button id="copyPrevMonthBtn" class="hidden lg:inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-medium rounded-xl bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 transition-all shadow-sm" title="Copy categories and amounts from previous month">
+            <i class="fa-regular fa-copy text-slate-400"></i>
+            <span>Copy Last Month</span>
+          </button>
+
+          <!-- Print / PDF -->
+          <button id="printReportBtn" class="p-2 sm:px-3 sm:py-2 text-xs font-medium rounded-xl bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 transition-all shadow-sm" title="Print / Save PDF Report">
+            <i class="fa-solid fa-print sm:mr-1 text-slate-500"></i>
+            <span class="hidden sm:inline">Print</span>
+          </button>
+
+          <!-- Reset Month -->
+          <button id="resetMonthBtn" class="p-2 sm:px-3 sm:py-2 text-xs font-medium rounded-xl bg-white text-rose-600 hover:bg-rose-50 border border-rose-200 transition-all shadow-sm" title="Reset this month">
+            <i class="fa-solid fa-rotate-left sm:mr-1"></i>
+            <span class="hidden sm:inline">Reset</span>
+          </button>
+
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full space-y-6 sm:space-y-8">
+    
+    <!-- TOP OVERVIEW SUMMARY CARDS -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      
+      <!-- Inflow Card -->
+      <div class="glass-panel card-shadow rounded-2xl p-5 border-l-4 border-l-emerald-500 relative overflow-hidden">
+        <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+          <span>Monthly Inflow</span>
+          <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <i class="fa-solid fa-arrow-down-long"></i>
+          </span>
+        </div>
+        <div id="statTotalIncome" class="text-2xl sm:text-3xl font-bold font-mono-numbers text-slate-900 mt-1">$ 0.00</div>
+        <div class="flex items-center space-x-2 mt-2">
+          <span class="text-xs text-emerald-600 font-medium">Income & Allowance</span>
+          <span class="text-xs text-slate-300">•</span>
+          <span id="statIncomeSubtext" class="text-xs text-slate-400">1 stream</span>
+        </div>
+      </div>
+
+      <!-- Outflow Card -->
+      <div class="glass-panel card-shadow rounded-2xl p-5 border-l-4 border-l-rose-500 relative overflow-hidden">
+        <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+          <span>Monthly Outflow</span>
+          <span class="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+            <i class="fa-solid fa-arrow-up-long"></i>
+          </span>
+        </div>
+        <div id="statTotalExpenses" class="text-2xl sm:text-3xl font-bold font-mono-numbers text-slate-900 mt-1">$ 0.00</div>
+        <div class="flex items-center space-x-2 mt-2">
+          <span class="text-xs text-rose-600 font-medium">Total Expenses</span>
+          <span class="text-xs text-slate-300">•</span>
+          <span id="statExpenseSubtext" class="text-xs text-slate-400">0% of income</span>
+        </div>
+      </div>
+
+      <!-- Net Balance / Cash Flow Card -->
+      <div id="balanceStatCard" class="glass-panel card-shadow rounded-2xl p-5 border-l-4 border-l-indigo-500 relative overflow-hidden">
+        <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+          <span>Net Cash Flow</span>
+          <span id="balanceBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">Zero Balance</span>
+        </div>
+        <div id="statBalance" class="text-2xl sm:text-3xl font-bold font-mono-numbers text-slate-900 mt-1">$ 0.00</div>
+        <div class="flex items-center space-x-2 mt-2 text-xs text-slate-400">
+          <span>Inflow minus Outflow balance</span>
+        </div>
+      </div>
+
+      <!-- Financial Health Score Card -->
+      <div class="glass-panel card-shadow rounded-2xl p-5 border-l-4 border-l-indigo-500 relative overflow-hidden flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+            <span>Financial Health</span>
+            <i class="fa-solid fa-shield-heart text-indigo-500"></i>
+          </div>
+          <div class="mt-2">
+            <span id="healthScoreBadge" class="inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">
+              <span class="w-2.5 h-2.5 rounded-full mr-2 bg-emerald-500"></span>
+              Score: <strong>100/100</strong> (Ready)
+            </span>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-2">Evaluates savings rate, wants, and debt balance</p>
+      </div>
+
+    </section>
+
+    <!-- MAIN TWO-COLUMN WORKSPACE -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
+      
+      <!-- LEFT COLUMN: BUDGET INPUTS (7 Columns) -->
+      <div class="lg:col-span-7 space-y-6 sm:space-y-8">
+        
+        <!-- SECTION 1: INFLOW / INCOME -->
+        <section class="glass-panel card-shadow rounded-2xl p-5 sm:p-6 border border-slate-200/80">
+          <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-sm">
+                <i class="fa-solid fa-money-bill-wave"></i>
+              </div>
+              <div>
+                <h2 class="text-base sm:text-lg font-bold text-slate-900">Monthly Inflow (Income)</h2>
+                <p class="text-xs text-slate-500">Enter your salary, allowance, or secondary earnings</p>
+              </div>
+            </div>
+
+            <!-- Add Income Stream Button -->
+            <button id="addIncomeBtn" class="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all">
+              <i class="fa-solid fa-plus"></i>
+              <span>Add Income</span>
+            </button>
+          </div>
+
+          <!-- Income Items Container -->
+          <div id="incomeInputsContainer" class="space-y-1">
+            <!-- Dynamically generated income rows -->
+          </div>
+        </section>
+
+
+        <!-- SECTION 2: OUTFLOW / EXPENSES -->
+        <section class="glass-panel card-shadow rounded-2xl p-5 sm:p-6 border border-slate-200/80">
+          
+          <!-- Header and Category Management -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 mb-4">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
+                <i class="fa-solid fa-layer-group"></i>
+              </div>
+              <div>
+                <h2 class="text-base sm:text-lg font-bold text-slate-900">Monthly Outflow (Costs)</h2>
+                <p class="text-xs text-slate-500">Presets & custom cost categories for this month</p>
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <!-- Manage Presets Modal Button -->
+              <button id="managePresetsBtn" class="inline-flex items-center space-x-1 px-3 py-1.5 text-xs font-medium rounded-xl text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors" title="Toggle preset categories on/off">
+                <i class="fa-solid fa-sliders text-slate-500 mr-1"></i>
+                <span>Presets</span>
+              </button>
+
+              <!-- Add Custom Cost Button -->
+              <button id="openAddCustomModalBtn" class="inline-flex items-center space-x-1 px-3 py-1.5 text-xs font-semibold rounded-xl text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all">
+                <i class="fa-solid fa-plus mr-1"></i>
+                <span>Custom Cost</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- INLINE ADD CUSTOM EXPENSE FORM (Initially hidden) -->
+          <div id="addCustomExpenseCard" class="hidden mb-5 bg-gradient-to-r from-indigo-50/70 to-slate-50 border border-indigo-200 rounded-2xl p-4 sm:p-5 transition-all">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-bold text-indigo-950 flex items-center">
+                <i class="fa-solid fa-plus-circle text-indigo-600 mr-2"></i>
+                Add Custom Cost Category
+              </h3>
+              <span class="text-xs text-indigo-600 font-medium">Add any cost unique to you</span>
+            </div>
+
+            <form id="customExpenseForm" class="space-y-3">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <!-- Name -->
+                <div class="sm:col-span-1">
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Cost Name</label>
+                  <input type="text" id="customNameInput" placeholder="e.g. Pet Care, Gym, Tuition" required
+                    class="w-full text-xs sm:text-sm font-medium px-3 py-2 bg-white border border-slate-300 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all">
+                </div>
+
+                <!-- Classification -->
+                <div class="sm:col-span-1">
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Type</label>
+                  <select id="customClassSelect" class="w-full text-xs sm:text-sm font-medium px-3 py-2 bg-white border border-slate-300 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all">
+                    <option value="need">Essential Need (Groceries, Transit, Care)</option>
+                    <option value="want" selected>Discretionary Want (Hobbies, Dining)</option>
+                    <option value="debt">Debt / Installment (EMI, BNPL)</option>
+                    <option value="saving">Savings / Investment (Goals)</option>
+                  </select>
+                </div>
+
+                <!-- Amount -->
+                <div class="sm:col-span-1">
+                  <label class="block text-xs font-semibold text-slate-600 mb-1">Estimated Amount</label>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs font-semibold pointer-events-none">$</span>
+                    <input type="number" step="any" min="0" id="customAmountInput" placeholder="0.00" required
+                      class="w-full pl-8 pr-3 py-2 text-right font-mono-numbers text-xs sm:text-sm font-medium bg-white border border-slate-300 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all">
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-end space-x-2 pt-2">
+                <button type="button" id="cancelAddCustomBtn" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-xl transition-all">
+                  Cancel
+                </button>
+                <button type="submit" class="px-4 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-sm">
+                  Save Cost Field
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Active Expenses Items List -->
+          <div id="expenseInputsContainer" class="space-y-1">
+            <!-- Dynamically populated preset & custom rows -->
+          </div>
+
+          <!-- Bottom Help Hint -->
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+            <span><i class="fa-solid fa-circle-info mr-1 text-indigo-400"></i> Click ✕ to remove any category not relevant to you</span>
+            <button onclick="window.budgetApp.openManagePresetsModal()" class="text-indigo-600 hover:text-indigo-800 font-semibold underline">
+              Browse More Presets
+            </button>
+          </div>
+
+        </section>
+
+      </div>
+
+
+      <!-- RIGHT COLUMN: SMART ADVISOR & CHARTS (5 Columns) -->
+      <div class="lg:col-span-5 space-y-6 sm:space-y-8">
+        
+        <!-- CARD 1: SMART FINANCIAL ADVISOR & SUGGESTIONS -->
+        <section class="glass-panel card-shadow rounded-2xl p-5 sm:p-6 border border-slate-200/80">
+          <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-rose-500 text-white flex items-center justify-center shadow-sm">
+                <i class="fa-solid fa-brain"></i>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-slate-900">Financial Advisor & Insights</h3>
+                <p class="text-xs text-slate-500">Live advice based on your spending pattern</p>
+              </div>
+            </div>
+
+            <span id="suggestionsCountBadge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
+              0 Notices
+            </span>
+          </div>
+
+          <!-- Suggestions List -->
+          <div id="suggestionsContainer" class="space-y-3 max-h-[480px] overflow-y-auto pr-1">
+            <!-- Dynamically injected real-time advice cards (e.g., Entertainment alert, rent warning, etc.) -->
+          </div>
+        </section>
+
+
+        <!-- CARD 2: VISUAL ANALYTICS & CHARTS -->
+        <section class="glass-panel card-shadow rounded-2xl p-5 sm:p-6 border border-slate-200/80">
+          
+          <!-- Chart Header & Switcher Tabs -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 mb-4">
+            <div>
+              <h3 class="text-base font-bold text-slate-900">Money Flow Analytics</h3>
+              <p class="text-xs text-slate-500">Visual breakdown of inflow vs outflow</p>
+            </div>
+
+            <!-- Tab Pills -->
+            <div class="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-medium self-start sm:self-auto">
+              <button class="chart-tab-btn px-2.5 py-1 rounded-lg bg-white text-slate-900 shadow-sm font-semibold transition-all" data-tab="donut">
+                Breakdown
+              </button>
+              <button class="chart-tab-btn px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-700 transition-all" data-tab="flow">
+                Inflow vs Outflow
+              </button>
+              <button class="chart-tab-btn px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-700 transition-all" data-tab="rule">
+                50/30/20 Rule
+              </button>
+            </div>
+          </div>
+
+          <!-- TAB CONTENT 1: EXPENSE BREAKDOWN DONUT -->
+          <div id="donutChartContainer" class="space-y-4">
+            <div class="h-60 relative flex items-center justify-center">
+              <canvas id="expenseDonutChart"></canvas>
+            </div>
+            <!-- Custom Donut Legend -->
+            <div id="donutChartLegend" class="max-h-48 overflow-y-auto pr-1 border-t border-slate-100 pt-2">
+              <!-- Dynamically rendered -->
+            </div>
+          </div>
+
+          <!-- TAB CONTENT 2: CASH FLOW COMPARISON BAR CHART -->
+          <div id="flowChartContainer" class="hidden space-y-4">
+            <div class="h-64 relative">
+              <canvas id="cashFlowBarChart"></canvas>
+            </div>
+            <p class="text-[11px] text-slate-400 text-center">Visualizes your Total Income, Total Expenses, and Net Balance side-by-side.</p>
+          </div>
+
+          <!-- TAB CONTENT 3: 50/30/20 BUDGET BENCHMARK -->
+          <div id="rule503020Container" class="hidden space-y-4 pt-1">
+            <div class="text-xs text-slate-600 leading-relaxed bg-indigo-50/60 p-3 rounded-xl border border-indigo-100">
+              <strong class="text-indigo-900">The 50/30/20 Benchmark:</strong> A popular financial guideline allocating 50% to Needs (Housing, Food, Transit, Debt), 30% to Wants (Entertainment, Leisure), and 20% to Savings.
+            </div>
+
+            <!-- Needs Bar -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs font-semibold text-slate-700">
+                <span>Needs & Fixed Obligations</span>
+                <span id="ruleNeedsVal" class="font-mono-numbers text-sky-600">0% (Ideal: ≤50%)</span>
+              </div>
+              <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                <div id="ruleNeedsBar" class="bg-sky-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Wants Bar -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs font-semibold text-slate-700">
+                <span>Wants & Entertainment</span>
+                <span id="ruleWantsVal" class="font-mono-numbers text-pink-600">0% (Ideal: ≤30%)</span>
+              </div>
+              <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                <div id="ruleWantsBar" class="bg-pink-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <!-- Savings Bar -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs font-semibold text-slate-700">
+                <span>Savings & Buffer</span>
+                <span id="ruleSavingsVal" class="font-mono-numbers text-emerald-600">0% (Ideal: ≥20%)</span>
+              </div>
+              <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                <div id="ruleSavingsBar" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- MODAL: MANAGE PRESET CATEGORIES -->
+  <div id="managePresetsModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <!-- Backdrop -->
+    <div id="presetsModalBackdrop" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"></div>
+    
+    <!-- Modal Dialog -->
+    <div class="relative bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl z-10 space-y-4 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <i class="fa-solid fa-sliders"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 text-base">Manage Preset Categories</h3>
+            <p class="text-xs text-slate-400">Toggle categories on/off according to your lifestyle</p>
+          </div>
+        </div>
+        <button id="closePresetsModalBtn" class="p-2 text-slate-400 hover:text-slate-700 rounded-lg">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Scrollable list of presets -->
+      <div id="presetsManagerList" class="overflow-y-auto space-y-2.5 flex-1 pr-1">
+        <!-- Dynamically populated toggle list -->
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex justify-end">
+        <button onclick="window.budgetApp.closeManagePresetsModal()" class="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-sm">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="mt-12 py-6 border-t border-slate-200/80 bg-white/60 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-3">
+      <div class="flex items-center space-x-2">
+        <i class="fa-solid fa-lock text-emerald-500"></i>
+        <span>Client-side only: All your data is stored locally in your browser. Nothing leaves your device.</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <button id="clearAllDataBtn" class="text-slate-400 hover:text-rose-500 transition-colors">
+          Clear All Stored Data
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- App Scripts -->
+  <script src="js/budgetEngine.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

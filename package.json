@@ -1,0 +1,12 @@
+{
+  "name": "budget-calculator",
+  "version": "1.0.0",
+  "description": "Smart Monthly Budget Planner with Cash Flow Intelligence and Spending Feedback",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve -l 3000 ."
+  },
+  "keywords": ["budget", "finance", "calculator", "personal-finance", "cashflow"],
+  "author": "",
+  "license": "MIT"
+}
