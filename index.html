@@ -43,7 +43,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       <!-- ROW 1: BRAND, MONTH SELECTOR, & PREFERENCES -->
-      <div class="flex flex-col md:flex-row items-center justify-between py-3 md:py-0 md:h-18 gap-3 md:gap-4">
+      <div class="flex flex-col md:flex-row items-center justify-between pt-4 pb-4 sm:pt-5 sm:pb-6 gap-3.5 md:gap-4">
         
         <!-- App Logo & Title -->
         <div class="flex items-center space-x-3 shrink-0 self-start md:self-auto">
@@ -98,13 +98,13 @@
         </div>
       </div>
 
-      <!-- ROW 2: CATEGORIZED TOOLBAR (BUDGET ACTIONS & DATA REPORTS) -->
-      <div class="py-2.5 border-t border-slate-200/60 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+      <!-- ROW 2: CATEGORIZED TOOLBAR (EXPANDED SPACING & MOBILE SLIDER) -->
+      <div class="pt-4 pb-4 sm:pt-5 sm:pb-5 border-t border-slate-200/80 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
         
         <!-- Category 1: Monthly Budget Actions -->
-        <div class="flex items-center space-x-2 flex-wrap gap-y-1.5">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center mr-1">
-            <i class="fa-solid fa-bolt text-indigo-500 mr-1.5 text-[10px]"></i> Budget Actions:
+        <div class="flex items-center space-x-2 overflow-x-auto no-scrollbar pb-1 md:pb-0 shrink-0">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center mr-1 shrink-0">
+            <i class="fa-solid fa-bolt text-indigo-500 mr-1.5 text-[10px]"></i> Actions:
           </span>
 
           <!-- Load Demo -->
@@ -127,9 +127,9 @@
         </div>
 
         <!-- Category 2: Data, Backup & Reports (Separated into its own category) -->
-        <div class="flex items-center space-x-2 flex-wrap gap-y-1.5">
-          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center mr-1">
-            <i class="fa-solid fa-box-archive text-emerald-500 mr-1.5 text-[10px]"></i> Data & Reports:
+        <div class="flex items-center space-x-2 overflow-x-auto no-scrollbar pb-1 md:pb-0 shrink-0">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center mr-1 shrink-0">
+            <i class="fa-solid fa-box-archive text-emerald-500 mr-1.5 text-[10px]"></i> Data:
           </span>
 
           <!-- Print / PDF -->
@@ -158,79 +158,98 @@
   </header>
 
   <!-- MAIN CONTAINER -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full space-y-6 sm:space-y-8">
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 flex-1 w-full space-y-5 sm:space-y-8">
     
-    <!-- TOP OVERVIEW SUMMARY CARDS -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+    <!-- TOP OVERVIEW SUMMARY CARDS (2x2 on Mobile, 4x1 on Desktop) -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-5">
       
       <!-- Inflow Card -->
-      <div class="glass-panel card-shadow rounded-2xl p-5 border-l-4 border-l-emerald-500 relative overflow-hidden">
-        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
-          <span>Monthly Inflow</span>
-          <span class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-            <i class="fa-solid fa-arrow-down-long"></i>
+      <div class="glass-panel card-shadow rounded-2xl p-3.5 sm:p-5 border-l-4 border-l-emerald-500 relative overflow-hidden">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1">
+          <span>Inflow</span>
+          <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+            <i class="fa-solid fa-arrow-down-long text-xs sm:text-sm"></i>
           </span>
         </div>
-        <div id="statTotalIncome" class="text-2xl sm:text-3xl font-bold font-mono-numbers text-slate-900 dark:text-white mt-1">RM 0.00</div>
-        <div class="flex items-center space-x-2 mt-2">
-          <span class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Income & Allowance</span>
-          <span class="text-xs text-slate-300 dark:text-slate-600">•</span>
-          <span id="statIncomeSubtext" class="text-xs text-slate-400 dark:text-slate-400">1 stream</span>
+        <div id="statTotalIncome" class="text-base sm:text-2xl lg:text-3xl font-bold font-mono-numbers text-slate-900 dark:text-white mt-1 truncate">RM 0.00</div>
+        <div class="flex items-center space-x-1.5 mt-1 sm:mt-2 text-[10px] sm:text-xs truncate">
+          <span class="text-emerald-600 dark:text-emerald-400 font-medium truncate">Income</span>
+          <span class="text-slate-300 dark:text-slate-600">•</span>
+          <span id="statIncomeSubtext" class="text-slate-400 dark:text-slate-400 truncate">1 stream</span>
         </div>
       </div>
 
       <!-- Outflow Card -->
-      <div class="glass-panel card-shadow rounded-2xl p-5 border-l-4 border-l-rose-500 relative overflow-hidden">
-        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
-          <span>Monthly Outflow</span>
-          <span class="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-            <i class="fa-solid fa-arrow-up-long"></i>
+      <div class="glass-panel card-shadow rounded-2xl p-3.5 sm:p-5 border-l-4 border-l-rose-500 relative overflow-hidden">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1">
+          <span>Outflow</span>
+          <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+            <i class="fa-solid fa-arrow-up-long text-xs sm:text-sm"></i>
           </span>
         </div>
-        <div id="statTotalExpenses" class="text-2xl sm:text-3xl font-bold font-mono-numbers text-slate-900 dark:text-white mt-1">RM 0.00</div>
-        <div class="flex items-center space-x-2 mt-2">
-          <span class="text-xs text-rose-600 dark:text-rose-400 font-medium">Total Expenses</span>
-          <span class="text-xs text-slate-300 dark:text-slate-600">•</span>
-          <span id="statExpenseSubtext" class="text-xs text-slate-400 dark:text-slate-400">0% of income</span>
+        <div id="statTotalExpenses" class="text-base sm:text-2xl lg:text-3xl font-bold font-mono-numbers text-slate-900 dark:text-white mt-1 truncate">RM 0.00</div>
+        <div class="flex items-center space-x-1.5 mt-1 sm:mt-2 text-[10px] sm:text-xs truncate">
+          <span class="text-rose-600 dark:text-rose-400 font-medium truncate">Costs</span>
+          <span class="text-slate-300 dark:text-slate-600">•</span>
+          <span id="statExpenseSubtext" class="text-slate-400 dark:text-slate-400 truncate">0% spent</span>
         </div>
       </div>
 
       <!-- Net Balance / Cash Flow Card -->
-      <div id="balanceStatCard" class="glass-panel card-shadow rounded-2xl p-5 border-l-4 border-l-indigo-500 relative overflow-hidden">
-        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
+      <div id="balanceStatCard" class="glass-panel card-shadow rounded-2xl p-3.5 sm:p-5 border-l-4 border-l-indigo-500 relative overflow-hidden">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1">
           <span>Net Cash Flow</span>
-          <span id="balanceBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">Zero Balance</span>
+          <span id="balanceBadge" class="text-[9px] sm:text-xs font-bold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 truncate max-w-[85px] sm:max-w-none">Zero</span>
         </div>
-        <div id="statBalance" class="text-2xl sm:text-3xl font-bold font-mono-numbers text-slate-900 dark:text-white mt-1">RM 0.00</div>
-        <div class="flex items-center space-x-2 mt-2 text-xs text-slate-400 dark:text-slate-500">
-          <span>Inflow minus Outflow balance</span>
+        <div id="statBalance" class="text-base sm:text-2xl lg:text-3xl font-bold font-mono-numbers text-slate-900 dark:text-white mt-1 truncate">RM 0.00</div>
+        <div class="flex items-center space-x-1 mt-1 sm:mt-2 text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 truncate">
+          <span class="truncate">Inflow minus Outflow</span>
         </div>
       </div>
 
       <!-- Financial Health Score Card -->
-      <div class="glass-panel card-shadow rounded-2xl p-5 border-l-4 border-l-indigo-500 relative overflow-hidden flex flex-col justify-between">
+      <div class="glass-panel card-shadow rounded-2xl p-3.5 sm:p-5 border-l-4 border-l-indigo-500 relative overflow-hidden flex flex-col justify-between">
         <div>
-          <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
-            <span>Financial Health</span>
-            <i class="fa-solid fa-shield-heart text-indigo-500"></i>
+          <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-semibold uppercase tracking-wider mb-1">
+            <span>Health</span>
+            <i class="fa-solid fa-shield-heart text-indigo-500 text-xs sm:text-sm"></i>
           </div>
-          <div class="mt-2">
-            <span id="healthScoreBadge" class="inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full border bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800">
-              <span class="w-2.5 h-2.5 rounded-full mr-2 bg-emerald-500"></span>
-              Score: <strong>100/100</strong> (Ready)
+          <div class="mt-1">
+            <span id="healthScoreBadge" class="inline-flex items-center text-[10px] sm:text-xs font-semibold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800">
+              <span class="w-2 h-2 rounded-full mr-1.5 bg-emerald-500"></span>
+              Score: <strong>100/100</strong>
             </span>
           </div>
         </div>
-        <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-2">Evaluates savings rate, wants, and debt balance</p>
+        <p class="text-[9px] sm:text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">Savings & debt balance</p>
       </div>
 
     </section>
 
+    <!-- MOBILE VIEW SEGMENTED CONTROLLER (Visible only on mobile screens) -->
+    <div class="lg:hidden">
+      <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-200/70 dark:bg-slate-800/80 rounded-2xl border border-slate-300/60 dark:border-slate-700 shadow-inner text-xs font-semibold text-center">
+        <button id="mobileTabBudget" type="button" class="mobile-tab-btn py-2.5 rounded-xl bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 font-bold shadow-sm transition-all flex items-center justify-center space-x-1.5">
+          <i class="fa-solid fa-list-check text-xs"></i>
+          <span>Budget</span>
+        </button>
+        <button id="mobileTabAdvisor" type="button" class="mobile-tab-btn py-2.5 rounded-xl text-slate-500 dark:text-slate-400 font-medium hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center space-x-1.5 relative">
+          <i class="fa-solid fa-brain text-xs"></i>
+          <span>Advisor</span>
+          <span id="mobileAdvisorBadge" class="hidden text-[10px] px-1.5 py-0.2 rounded-full bg-rose-500 text-white font-bold ml-1"></span>
+        </button>
+        <button id="mobileTabCharts" type="button" class="mobile-tab-btn py-2.5 rounded-xl text-slate-500 dark:text-slate-400 font-medium hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center space-x-1.5">
+          <i class="fa-solid fa-chart-pie text-xs"></i>
+          <span>Analytics</span>
+        </button>
+      </div>
+    </div>
+
     <!-- MAIN TWO-COLUMN WORKSPACE -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-start">
       
       <!-- LEFT COLUMN: BUDGET INPUTS (7 Columns) -->
-      <div class="lg:col-span-7 space-y-6 sm:space-y-8">
+      <div id="budgetInputsColumn" class="lg:col-span-7 space-y-5 sm:space-y-8">
         
         <!-- SECTION 1: INFLOW / INCOME -->
         <section class="glass-panel card-shadow rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800">
@@ -324,7 +343,7 @@
                   <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Estimated Amount</label>
                   <div class="relative">
                     <span class="currency-label-display absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 dark:text-slate-500 text-xs font-semibold pointer-events-none">RM</span>
-                    <input type="number" step="any" min="0" id="customAmountInput" placeholder="0.00" required
+                    <input type="number" step="any" min="0" inputmode="decimal" id="customAmountInput" placeholder="0.00" required
                       class="w-full pl-11 pr-3 py-2 text-right font-mono-numbers text-xs sm:text-sm font-medium bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950 transition-all">
                   </div>
                 </div>
@@ -360,10 +379,10 @@
 
 
       <!-- RIGHT COLUMN: SMART ADVISOR & CHARTS (5 Columns) -->
-      <div class="lg:col-span-5 space-y-6 sm:space-y-8">
+      <div id="analyticsColumn" class="lg:col-span-5 space-y-5 sm:space-y-8">
         
         <!-- CARD 1: SMART FINANCIAL ADVISOR & SUGGESTIONS -->
-        <section class="glass-panel card-shadow rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800">
+        <section id="advisorCardSection" class="glass-panel card-shadow rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800">
           <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-4">
             <div class="flex items-center space-x-3">
               <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-rose-500 text-white flex items-center justify-center shadow-sm">
@@ -388,7 +407,7 @@
 
 
         <!-- CARD 2: VISUAL ANALYTICS & CHARTS -->
-        <section class="glass-panel card-shadow rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800">
+        <section id="chartsCardSection" class="glass-panel card-shadow rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-slate-800">
           
           <!-- Chart Header & Switcher Tabs -->
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800 mb-4">

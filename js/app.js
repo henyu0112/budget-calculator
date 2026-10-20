@@ -32,6 +32,7 @@ class BudgetApp {
       { code: 'IDR', symbol: 'Rp', name: 'Indonesian Rupiah (Rp)' }
     ];
 
+    this.activeMobileTab = 'budget';
     this.theme = this.initTheme();
     this.data = this.loadFromStorage();
     this.init();
@@ -145,6 +146,7 @@ class BudgetApp {
     this.renderMonthSelector();
     this.renderAll();
     this.attachEventListeners();
+    this.switchMobileTab('budget');
   }
 
   formatMoney(num) {
@@ -327,6 +329,69 @@ class BudgetApp {
         this.renderAll();
       }
     });
+
+    // Mobile Segmented Tab Navigation
+    document.getElementById('mobileTabBudget')?.addEventListener('click', () => this.switchMobileTab('budget'));
+    document.getElementById('mobileTabAdvisor')?.addEventListener('click', () => this.switchMobileTab('advisor'));
+    document.getElementById('mobileTabCharts')?.addEventListener('click', () => this.switchMobileTab('charts'));
+
+    // Handle responsive layout on resize / orientation change
+    window.addEventListener('resize', () => {
+      this.switchMobileTab(this.activeMobileTab);
+    });
+  }
+
+  /**
+   * Switch active view on mobile devices (Budget, Advisor, Analytics)
+   */
+  switchMobileTab(tab) {
+    this.activeMobileTab = tab;
+    const isMobile = window.innerWidth < 1024;
+
+    const budgetBtn = document.getElementById('mobileTabBudget');
+    const advisorBtn = document.getElementById('mobileTabAdvisor');
+    const chartsBtn = document.getElementById('mobileTabCharts');
+
+    const setActive = (btn, active) => {
+      if (!btn) return;
+      if (active) {
+        btn.className = 'mobile-tab-btn py-2.5 rounded-xl bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 font-bold shadow-sm transition-all flex items-center justify-center space-x-1.5';
+      } else {
+        btn.className = 'mobile-tab-btn py-2.5 rounded-xl text-slate-500 dark:text-slate-400 font-medium hover:text-slate-800 dark:hover:text-slate-200 transition-all flex items-center justify-center space-x-1.5';
+      }
+    };
+
+    setActive(budgetBtn, tab === 'budget');
+    setActive(advisorBtn, tab === 'advisor');
+    setActive(chartsBtn, tab === 'charts');
+
+    const budgetCol = document.getElementById('budgetInputsColumn');
+    const analyticsCol = document.getElementById('analyticsColumn');
+    const advisorSection = document.getElementById('advisorCardSection');
+    const chartsSection = document.getElementById('chartsCardSection');
+
+    if (!isMobile) {
+      budgetCol?.classList.remove('hidden');
+      analyticsCol?.classList.remove('hidden');
+      advisorSection?.classList.remove('hidden');
+      chartsSection?.classList.remove('hidden');
+      return;
+    }
+
+    if (tab === 'budget') {
+      budgetCol?.classList.remove('hidden');
+      analyticsCol?.classList.add('hidden');
+    } else if (tab === 'advisor') {
+      budgetCol?.classList.add('hidden');
+      analyticsCol?.classList.remove('hidden');
+      advisorSection?.classList.remove('hidden');
+      chartsSection?.classList.add('hidden');
+    } else if (tab === 'charts') {
+      budgetCol?.classList.add('hidden');
+      analyticsCol?.classList.remove('hidden');
+      advisorSection?.classList.add('hidden');
+      chartsSection?.classList.remove('hidden');
+    }
   }
 
   /**
@@ -733,6 +798,7 @@ class BudgetApp {
                 <input type="number" 
                   step="any" 
                   min="0"
+                  inputmode="decimal"
                   value="${item.amount !== undefined && item.amount !== '' ? item.amount : ''}" 
                   placeholder="0.00"
                   class="w-full pl-11 pr-3 py-2 text-right font-mono-numbers font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 dark:focus:ring-emerald-950 transition-all text-sm"
@@ -822,6 +888,7 @@ class BudgetApp {
                   <input type="number" 
                     step="any" 
                     min="0"
+                    inputmode="decimal"
                     value="${amount}" 
                     placeholder="0.00"
                     class="w-full pl-11 pr-3 py-2 text-right font-mono-numbers font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950 transition-all text-sm"
@@ -875,6 +942,7 @@ class BudgetApp {
                 <input type="number" 
                   step="any" 
                   min="0"
+                  inputmode="decimal"
                   value="${amountVal}" 
                   placeholder="0.00"
                   class="w-full pl-11 pr-3 py-2 text-right font-mono-numbers font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950 transition-all text-sm"
@@ -978,6 +1046,17 @@ class BudgetApp {
     this.charts.updateDonutChart('expenseDonutChart', result.allExpenses, this.currency);
     this.charts.updateFlowBarChart('cashFlowBarChart', result.totalIncome, result.totalExpenses, result.balance, this.currency);
     this.renderDonutLegend(result.allExpenses);
+
+    // Update Mobile Advisor Notice Badge
+    const mobileBadge = document.getElementById('mobileAdvisorBadge');
+    if (mobileBadge) {
+      if (result.suggestions && result.suggestions.length > 0) {
+        mobileBadge.textContent = result.suggestions.length;
+        mobileBadge.classList.remove('hidden');
+      } else {
+        mobileBadge.classList.add('hidden');
+      }
+    }
   }
 
   renderSuggestions(suggestions) {
