@@ -35,7 +35,12 @@ Budget Manager is a modern, responsive web application designed to help you trac
    - Charts, cards, text, and modals adjust seamlessly for comfortable night usage.
    - Saves your theme preference automatically.
 
-6. **Multi-Month Navigation & Persistence**
+6. **💾 Data Backup & Multi-Device Sync (Export & Import)**
+   - **Export Backup**: Download all your budget records across all months as a single `.json` file (`budget-manager-backup-YYYY-MM-DD.json`).
+   - **Import / Restore**: Upload your backup file on any device (phone, tablet, office PC) to restore all your months and settings with one click.
+   - **Data Protection**: Never worry about clearing your browser history or cache.
+
+7. **Multi-Month Navigation & Persistence**
    - Smooth navigation through every month (both odd and even months) with arrow buttons, calendar picker, or mouse wheel scroll.
    - **Copy Last Month**: One-click to copy recurring fixed expenses from the previous month.
    - **Demo Budget**: One-click "Load Demo" button to instantly preview realistic sample data.

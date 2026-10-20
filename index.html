@@ -111,6 +111,19 @@
             <span class="hidden sm:inline">Print</span>
           </button>
 
+          <!-- Export Data (Backup) -->
+          <button id="exportDataBtn" type="button" class="p-2 sm:px-3 sm:py-2 text-xs font-medium rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all shadow-sm flex items-center space-x-1" title="Export all budget records to a backup file">
+            <i class="fa-solid fa-cloud-arrow-down text-indigo-600 dark:text-indigo-400 sm:mr-1"></i>
+            <span class="hidden sm:inline">Export</span>
+          </button>
+
+          <!-- Import Data (Restore) -->
+          <button id="importDataBtn" type="button" class="p-2 sm:px-3 sm:py-2 text-xs font-medium rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all shadow-sm flex items-center space-x-1" title="Import / restore budget records from a backup file">
+            <i class="fa-solid fa-cloud-arrow-up text-emerald-600 dark:text-emerald-400 sm:mr-1"></i>
+            <span class="hidden sm:inline">Import</span>
+          </button>
+          <input type="file" id="importFileInput" accept=".json,application/json" class="sr-only">
+
           <!-- Reset Month -->
           <button id="resetMonthBtn" type="button" class="p-2 sm:px-3 sm:py-2 text-xs font-medium rounded-xl bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 transition-all shadow-sm" title="Reset this month">
             <i class="fa-solid fa-rotate-left sm:mr-1"></i>
@@ -485,7 +498,17 @@
         <i class="fa-solid fa-shield-halved text-emerald-500"></i>
         <span>Client-side only: All your data is stored locally in your browser. Nothing leaves your device.</span>
       </div>
-      <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-3 sm:space-x-4">
+        <button id="footerExportBtn" type="button" class="text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center space-x-1">
+          <i class="fa-solid fa-download"></i>
+          <span>Backup Data (Export)</span>
+        </button>
+        <span class="text-slate-300 dark:text-slate-700">•</span>
+        <button id="footerImportBtn" type="button" class="text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center space-x-1">
+          <i class="fa-solid fa-upload"></i>
+          <span>Restore Data (Import)</span>
+        </button>
+        <span class="text-slate-300 dark:text-slate-700">•</span>
         <button id="clearAllDataBtn" type="button" class="text-slate-400 hover:text-rose-500 transition-colors">
           Clear All Stored Data
         </button>

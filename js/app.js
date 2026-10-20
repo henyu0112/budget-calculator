@@ -297,6 +297,26 @@ class BudgetApp {
       window.print();
     });
 
+    // Export Data (Backup)
+    const handleExport = () => this.exportData();
+    document.getElementById('exportDataBtn')?.addEventListener('click', handleExport);
+    document.getElementById('footerExportBtn')?.addEventListener('click', handleExport);
+
+    // Import Data (Restore)
+    const fileInput = document.getElementById('importFileInput');
+    const triggerImport = () => fileInput?.click();
+    document.getElementById('importDataBtn')?.addEventListener('click', triggerImport);
+    document.getElementById('footerImportBtn')?.addEventListener('click', triggerImport);
+
+    fileInput?.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        this.importData(file);
+      }
+      // Reset input value so same file can be re-selected if needed
+      e.target.value = '';
+    });
+
     // Clear all data
     document.getElementById('clearAllDataBtn')?.addEventListener('click', () => {
       if (confirm('Are you sure you want to clear all stored budgets? This cannot be undone.')) {
@@ -408,6 +428,103 @@ class BudgetApp {
       this.saveToStorage();
       this.renderAll();
     }
+  }
+
+  /**
+   * Export all budget data as a downloadable JSON backup file
+   */
+  exportData() {
+    const payload = {
+      appName: 'Budget Manager',
+      version: '1.0',
+      exportedAt: new Date().toISOString(),
+      currency: this.currency,
+      months: this.data
+    };
+
+    const jsonString = JSON.stringify(payload, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `budget-manager-backup-${todayStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Import budget data from a JSON backup file
+   */
+  importData(file) {
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        
+        let importedMonths = null;
+        let importedCurrency = null;
+
+        if (parsed.months && typeof parsed.months === 'object') {
+          importedMonths = parsed.months;
+          importedCurrency = parsed.currency;
+        } else if (typeof parsed === 'object') {
+          importedMonths = parsed;
+        }
+
+        if (!importedMonths || typeof importedMonths !== 'object' || Object.keys(importedMonths).length === 0) {
+          alert('No valid budget data was found in this file. Please check that you selected a valid Budget Manager backup file.');
+          return;
+        }
+
+        const monthKeys = Object.keys(importedMonths);
+        const monthCount = monthKeys.length;
+        const confirmMsg = `Found backup file containing ${monthCount} month(s) of budget records.\n\nDo you want to restore this data? (Existing data for matching months will be updated)`;
+        
+        if (confirm(confirmMsg)) {
+          // Merge imported months with existing data
+          this.data = { ...this.data, ...importedMonths };
+
+          if (importedCurrency) {
+            this.currency = importedCurrency;
+          }
+
+          // If current month is in backup, keep it, otherwise switch to latest imported month
+          if (!this.data[this.currentMonthKey] && monthKeys.length > 0) {
+            this.currentMonthKey = monthKeys.sort().reverse()[0];
+          }
+
+          this.saveToStorage();
+          this.renderCurrencySelector();
+          this.renderMonthSelector();
+          this.renderAll();
+
+          if (window.confetti) {
+            window.confetti({
+              particleCount: 85,
+              spread: 60,
+              origin: { y: 0.6 }
+            });
+          }
+
+          alert(`🎉 Successfully restored ${monthCount} month(s) of budget data!`);
+        }
+      } catch (err) {
+        console.error('Import parsing error:', err);
+        alert('Failed to parse the backup file. Please ensure it is a valid .json file.');
+      }
+    };
+
+    reader.onerror = () => {
+      alert('Error reading the backup file.');
+    };
+
+    reader.readAsText(file);
   }
 
   addIncomeStream() {
