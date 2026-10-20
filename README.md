@@ -1,13 +1,13 @@
-# CashCompass - Smart Monthly Budget Planner
+# Budget Manager - Your personal budget buddy and advisor
 
-CashCompass is an interactive, modern web application designed to help users track monthly income, manage variable and fixed costs, visualize cash flow in real-time, and receive smart, actionable financial advice based on their spending habits.
+Budget Manager is a modern, responsive web application designed to help you track monthly income, manage variable and fixed costs, visualize cash flow in real-time, and receive smart, actionable financial advice based on your spending habits.
 
 ---
 
 ## 🌟 Key Features
 
 1. **Monthly Inflow Tracking (Salary / Allowance)**
-   - Enter your primary monthly salary or allowance.
+   - Enter your primary monthly salary or allowance (Default currency: **RM** / Malaysian Ringgit, switchable to `$`, `S$`, `€`, `£`, etc.).
    - Add multiple secondary income streams (freelance, bonuses, side gigs).
 
 2. **Customizable Outflow (Costs & Expenses)**
@@ -30,25 +30,21 @@ CashCompass is an interactive, modern web application designed to help users tra
    - **Savings Benchmark**: Highlights whether you are meeting the 20% savings threshold or living paycheck-to-paycheck.
    - **Deficit / Overspending Warnings**: Immediate alert when monthly expenses exceed total income.
 
-5. **Multi-Month Navigation & Persistence**
-   - Navigate through different months with previous/next arrows or the calendar picker.
+5. **🌙 Dark Mode & Night Theme**
+   - One-click toggle between crisp Light Mode and eye-friendly Dark Mode.
+   - Charts, cards, text, and modals adjust seamlessly for comfortable night usage.
+   - Saves your theme preference automatically.
+
+6. **Multi-Month Navigation & Persistence**
+   - Smooth navigation through every month (both odd and even months) with arrow buttons, calendar picker, or mouse wheel scroll.
    - **Copy Last Month**: One-click to copy recurring fixed expenses from the previous month.
    - **Demo Budget**: One-click "Load Demo" button to instantly preview realistic sample data.
    - **100% Private & Local**: All data is automatically saved to your browser's `localStorage`. No data is sent to external servers.
-   - **Multi-Currency Support**: Switch between `$`, `RM` (Malaysian Ringgit), `S$` (Singapore Dollar), `€`, `£`, `₹`, `¥`, and more.
    - **Print / PDF Export**: Clean, printable summary report.
 
 ---
 
-## 🚀 How to Run the Website
-
-You can run and view the website in either of two easy ways:
-
-### Option A: Open directly in your browser (Zero setup)
-Simply double-click `index.html` in your file explorer, or right-click `index.html` and choose **Open with > Chrome / Edge / Firefox**.
-
-### Option B: Local Web Server (Recommended)
-You can launch a local development server using Node.js or Python:
+## 🚀 How to Run the Website Locally
 
 ```bash
 # Using Python

@@ -1,12 +1,14 @@
 /**
- * Smart Budget Calculator - Application Logic & UI Controller
+ * Budget Manager - Application Logic & UI Controller
  */
 
 class BudgetApp {
   constructor() {
-    this.storageKey = 'cashcompass_budget_v1';
+    this.storageKey = 'budget_manager_v1';
+    this.themeStorageKey = 'budget_manager_theme';
     this.engine = new window.BudgetEngine();
     this.charts = new window.BudgetCharts();
+    this.listenersAttached = false;
     
     // Default current month format: YYYY-MM
     const today = new Date();
@@ -14,10 +16,11 @@ class BudgetApp {
     const month = String(today.getMonth() + 1).padStart(2, '0');
     this.currentMonthKey = `${year}-${month}`;
 
-    this.currency = '$';
+    // Default currency to RM as requested
+    this.currency = 'RM';
     this.currencies = [
-      { code: 'USD', symbol: '$', name: 'US Dollar ($)' },
       { code: 'MYR', symbol: 'RM', name: 'Malaysian Ringgit (RM)' },
+      { code: 'USD', symbol: '$', name: 'US Dollar ($)' },
       { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar (S$)' },
       { code: 'EUR', symbol: '€', name: 'Euro (€)' },
       { code: 'GBP', symbol: '£', name: 'British Pound (£)' },
@@ -29,8 +32,55 @@ class BudgetApp {
       { code: 'IDR', symbol: 'Rp', name: 'Indonesian Rupiah (Rp)' }
     ];
 
+    this.theme = this.initTheme();
     this.data = this.loadFromStorage();
     this.init();
+  }
+
+  initTheme() {
+    let savedTheme = localStorage.getItem(this.themeStorageKey);
+    if (!savedTheme) {
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      savedTheme = prefersDark ? 'dark' : 'light';
+    }
+    this.applyTheme(savedTheme);
+    return savedTheme;
+  }
+
+  applyTheme(theme) {
+    this.theme = theme;
+    localStorage.setItem(this.themeStorageKey, theme);
+    const htmlEl = document.documentElement;
+    const themeIcon = document.getElementById('themeToggleIcon');
+    const themeText = document.getElementById('themeToggleText');
+
+    if (theme === 'dark') {
+      htmlEl.classList.add('dark');
+      if (themeIcon) {
+        themeIcon.className = 'fa-solid fa-sun text-amber-400';
+      }
+      if (themeText) {
+        themeText.textContent = 'Light';
+      }
+    } else {
+      htmlEl.classList.remove('dark');
+      if (themeIcon) {
+        themeIcon.className = 'fa-solid fa-moon text-slate-600';
+      }
+      if (themeText) {
+        themeText.textContent = 'Dark';
+      }
+    }
+  }
+
+  toggleTheme() {
+    const nextTheme = this.theme === 'dark' ? 'light' : 'dark';
+    this.applyTheme(nextTheme);
+    // Re-render charts so their grid and text colors update
+    if (this.charts) {
+      this.charts.destroyAll();
+      this.recalculateAndRenderOverview();
+    }
   }
 
   loadFromStorage() {
@@ -59,9 +109,6 @@ class BudgetApp {
     }
   }
 
-  /**
-   * Ensure the current month has a default structure
-   */
   ensureMonthStructure(monthKey) {
     if (!this.data[monthKey]) {
       this.data[monthKey] = {
@@ -118,10 +165,9 @@ class BudgetApp {
       `<option value="${c.symbol}" ${c.symbol === this.currency ? 'selected' : ''}>${c.name}</option>`
     ).join('');
 
-    select.addEventListener('change', (e) => {
-      this.currency = e.target.value;
-      this.saveToStorage();
-      this.renderAll();
+    // Update any static currency label in the DOM
+    document.querySelectorAll('.currency-label-display').forEach(el => {
+      el.textContent = this.currency;
     });
   }
 
@@ -137,15 +183,71 @@ class BudgetApp {
   }
 
   attachEventListeners() {
-    // Month navigation
-    document.getElementById('prevMonthBtn')?.addEventListener('click', () => this.navigateMonth(-1));
-    document.getElementById('nextMonthBtn')?.addEventListener('click', () => this.navigateMonth(1));
-    document.getElementById('monthPickerInput')?.addEventListener('change', (e) => {
+    if (this.listenersAttached) return;
+    this.listenersAttached = true;
+
+    // Dark mode toggle
+    document.getElementById('themeToggleBtn')?.addEventListener('click', () => this.toggleTheme());
+
+    // Month navigation with exact integer step
+    document.getElementById('prevMonthBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.navigateMonth(-1);
+    });
+
+    document.getElementById('nextMonthBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.navigateMonth(1);
+    });
+
+    // Calendar picker button
+    const monthPickerInput = document.getElementById('monthPickerInput');
+    const openDatePickerBtn = document.getElementById('openDatePickerBtn');
+    const currentMonthDisplay = document.getElementById('currentMonthDisplay');
+
+    const triggerDatePicker = () => {
+      if (monthPickerInput) {
+        if (typeof monthPickerInput.showPicker === 'function') {
+          monthPickerInput.showPicker();
+        } else {
+          monthPickerInput.click();
+        }
+      }
+    };
+
+    openDatePickerBtn?.addEventListener('click', triggerDatePicker);
+    currentMonthDisplay?.addEventListener('click', triggerDatePicker);
+
+    monthPickerInput?.addEventListener('change', (e) => {
       if (e.target.value) {
         this.currentMonthKey = e.target.value;
         this.renderMonthSelector();
         this.renderAll();
       }
+    });
+
+    // Mouse wheel scrolling on month switcher (smooth single-month steps)
+    const monthSelectorContainer = document.getElementById('monthSelectorContainer');
+    let wheelThrottle = false;
+    monthSelectorContainer?.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (wheelThrottle) return;
+      wheelThrottle = true;
+      setTimeout(() => { wheelThrottle = false; }, 220);
+
+      if (e.deltaY < 0) {
+        this.navigateMonth(-1);
+      } else if (e.deltaY > 0) {
+        this.navigateMonth(1);
+      }
+    }, { passive: false });
+
+    // Currency selector
+    document.getElementById('currencySelector')?.addEventListener('change', (e) => {
+      this.currency = e.target.value;
+      this.saveToStorage();
+      this.renderCurrencySelector();
+      this.renderAll();
     });
 
     // Sample data demo button
@@ -178,12 +280,12 @@ class BudgetApp {
     tabBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {
         tabBtns.forEach(b => {
-          b.classList.remove('bg-white', 'text-slate-900', 'shadow-sm', 'font-semibold');
-          b.classList.add('text-slate-500', 'hover:text-slate-700');
+          b.classList.remove('bg-white', 'dark:bg-slate-800', 'text-slate-900', 'dark:text-white', 'shadow-sm', 'font-semibold');
+          b.classList.add('text-slate-500', 'dark:text-slate-400', 'hover:text-slate-700');
         });
         const target = e.currentTarget;
-        target.classList.add('bg-white', 'text-slate-900', 'shadow-sm', 'font-semibold');
-        target.classList.remove('text-slate-500');
+        target.classList.add('bg-white', 'dark:bg-slate-800', 'text-slate-900', 'dark:text-white', 'shadow-sm', 'font-semibold');
+        target.classList.remove('text-slate-500', 'dark:text-slate-400');
 
         const tabType = target.getAttribute('data-tab');
         this.switchChartTab(tabType);
@@ -195,22 +297,32 @@ class BudgetApp {
       window.print();
     });
 
-    // Clear all data (in settings or footer)
+    // Clear all data
     document.getElementById('clearAllDataBtn')?.addEventListener('click', () => {
       if (confirm('Are you sure you want to clear all stored budgets? This cannot be undone.')) {
         localStorage.removeItem(this.storageKey);
         this.data = {};
-        this.init();
+        this.currentMonthKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+        this.renderMonthSelector();
+        this.renderAll();
       }
     });
   }
 
+  /**
+   * Navigate exactly 1 month forward or backward (handles every month: odd & even)
+   */
   navigateMonth(delta) {
-    const [y, m] = this.currentMonthKey.split('-').map(Number);
-    const date = new Date(y, m - 1 + delta, 1);
-    const newYear = date.getFullYear();
-    const newMonth = String(date.getMonth() + 1).padStart(2, '0');
-    this.currentMonthKey = `${newYear}-${newMonth}`;
+    let [y, m] = this.currentMonthKey.split('-').map(Number);
+    m += delta;
+    if (m > 12) {
+      y += 1;
+      m = 1;
+    } else if (m < 1) {
+      y -= 1;
+      m = 12;
+    }
+    this.currentMonthKey = `${y}-${String(m).padStart(2, '0')}`;
     this.renderMonthSelector();
     this.renderAll();
   }
@@ -218,19 +330,19 @@ class BudgetApp {
   loadDemoData() {
     const demoMonth = {
       incomeList: [
-        { id: 'primary_salary', name: 'Monthly Salary / Allowance', amount: 4200 },
-        { id: 'inc_freelance', name: 'Freelance Design', amount: 650 }
+        { id: 'primary_salary', name: 'Monthly Salary / Allowance', amount: 4500 },
+        { id: 'inc_freelance', name: 'Freelance Design', amount: 800 }
       ],
       expenses: {
         presets: {
-          food: { active: true, amount: 680 },
-          transport: { active: true, amount: 260 },
-          entertainment: { active: true, amount: 620 }, // ~12.8%, triggers suggestions!
-          saving: { active: true, amount: 950 },
-          rental: { active: true, amount: 1100 },
-          loan: { active: true, amount: 350 },
-          installment: { active: true, amount: 180 },
-          utilities: { active: true, amount: 160 },
+          food: { active: true, amount: 750 },
+          transport: { active: true, amount: 320 },
+          entertainment: { active: true, amount: 780 }, // ~14.7%, triggers entertainment insights!
+          saving: { active: true, amount: 1100 },
+          rental: { active: true, amount: 1200 },
+          loan: { active: true, amount: 400 },
+          installment: { active: true, amount: 200 },
+          utilities: { active: true, amount: 180 },
           healthcare: { active: false, amount: 0 },
           shopping: { active: false, amount: 0 }
         },
@@ -239,7 +351,7 @@ class BudgetApp {
             id: 'custom_gym',
             name: 'Gym & Fitness Membership',
             classification: 'want',
-            amount: 80,
+            amount: 90,
             icon: 'fa-dumbbell',
             color: '#6366f1'
           },
@@ -247,7 +359,7 @@ class BudgetApp {
             id: 'custom_pet',
             name: 'Pet Care & Cat Food',
             classification: 'need',
-            amount: 110,
+            amount: 120,
             icon: 'fa-paw',
             color: '#14b8a6'
           }
@@ -259,10 +371,10 @@ class BudgetApp {
     this.saveToStorage();
     this.renderAll();
 
-    // Trigger celebration confetti
+    // Confetti celebration
     if (window.confetti) {
       window.confetti({
-        particleCount: 80,
+        particleCount: 75,
         spread: 60,
         origin: { y: 0.6 }
       });
@@ -278,9 +390,13 @@ class BudgetApp {
   }
 
   copyFromPreviousMonth() {
-    const [y, m] = this.currentMonthKey.split('-').map(Number);
-    const prevDate = new Date(y, m - 2, 1);
-    const prevKey = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
+    let [y, m] = this.currentMonthKey.split('-').map(Number);
+    m -= 1;
+    if (m < 1) {
+      y -= 1;
+      m = 12;
+    }
+    const prevKey = `${y}-${String(m).padStart(2, '0')}`;
 
     if (!this.data[prevKey]) {
       alert(`No budget data found for previous month (${this.formatMonthDisplay(prevKey)}).`);
@@ -352,7 +468,6 @@ class BudgetApp {
       return;
     }
 
-    // Pick a thematic icon/color based on classification
     let icon = 'fa-tag';
     let color = '#64748b';
     if (classification === 'need') { icon = 'fa-cart-shopping'; color = '#0284c7'; }
@@ -422,22 +537,21 @@ class BudgetApp {
     container.innerHTML = this.engine.presetDefinitions.map(def => {
       const entry = presets[def.id];
       const isActive = entry ? entry.active : def.defaultActive;
-      const currentAmount = entry ? entry.amount : '';
 
       return `
-        <div class="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 hover:border-slate-300 transition-all bg-white">
+        <div class="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 transition-all bg-white dark:bg-slate-800">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-base shadow-sm" style="background-color: ${def.color}">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white text-base shadow-sm shrink-0" style="background-color: ${def.color}">
               <i class="fa-solid ${def.icon}"></i>
             </div>
             <div>
-              <div class="font-semibold text-slate-800 text-sm">${def.name}</div>
-              <div class="text-xs text-slate-400 capitalize">${def.classification} • ${def.hint}</div>
+              <div class="font-semibold text-slate-800 dark:text-slate-100 text-sm">${def.name}</div>
+              <div class="text-xs text-slate-400 dark:text-slate-400 capitalize">${def.classification} • ${def.hint}</div>
             </div>
           </div>
-          <label class="relative inline-flex items-center cursor-pointer">
+          <label class="relative inline-flex items-center cursor-pointer shrink-0">
             <input type="checkbox" class="sr-only peer" ${isActive ? 'checked' : ''} onchange="window.budgetApp.togglePresetActive('${def.id}', this.checked)">
-            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+            <div class="w-11 h-6 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
           </label>
         </div>
       `;
@@ -466,9 +580,6 @@ class BudgetApp {
     this.recalculateAndRenderOverview();
   }
 
-  /**
-   * Render Inflow / Income Inputs
-   */
   renderIncomeSection() {
     const container = document.getElementById('incomeInputsContainer');
     if (!container) return;
@@ -479,19 +590,19 @@ class BudgetApp {
     container.innerHTML = incomeList.map((item, index) => {
       const isPrimary = index === 0;
       return `
-        <div class="income-item group relative bg-white border border-slate-200/90 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-emerald-300 transition-all mb-3">
+        <div class="income-item group relative bg-white dark:bg-slate-850 dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/80 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-emerald-300 dark:hover:border-emerald-500/50 transition-all mb-3">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="flex items-center space-x-3 flex-1">
-              <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+              <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-900/60">
                 <i class="fa-solid fa-wallet text-base"></i>
               </div>
               <div class="flex-1 min-w-0">
                 ${isPrimary 
-                  ? `<div class="font-semibold text-slate-800 text-sm truncate">${item.name}</div>
-                     <div class="text-xs text-slate-400">Primary take-home allowance or salary</div>`
+                  ? `<div class="font-semibold text-slate-800 dark:text-slate-100 text-sm truncate">${item.name}</div>
+                     <div class="text-xs text-slate-400 dark:text-slate-400">Primary take-home allowance or salary</div>`
                   : `<input type="text" value="${item.name}" 
                       placeholder="Income source title"
-                      class="font-semibold text-slate-800 text-sm w-full bg-transparent border-b border-transparent hover:border-slate-300 focus:border-emerald-500 py-0.5" 
+                      class="font-semibold text-slate-800 dark:text-slate-100 text-sm w-full bg-transparent border-b border-transparent hover:border-slate-300 dark:hover:border-slate-600 focus:border-emerald-500 py-0.5" 
                       onchange="window.budgetApp.updateIncomeName('${item.id}', this.value)">`
                 }
               </div>
@@ -499,7 +610,7 @@ class BudgetApp {
 
             <div class="flex items-center space-x-2 self-end sm:self-auto">
               <div class="relative w-40 sm:w-44">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm font-semibold pointer-events-none">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 dark:text-slate-500 text-xs sm:text-sm font-semibold pointer-events-none">
                   ${this.currency}
                 </span>
                 <input type="number" 
@@ -507,14 +618,14 @@ class BudgetApp {
                   min="0"
                   value="${item.amount !== undefined && item.amount !== '' ? item.amount : ''}" 
                   placeholder="0.00"
-                  class="w-full pl-9 pr-3 py-2 text-right font-mono-numbers font-semibold text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all text-sm"
+                  class="w-full pl-11 pr-3 py-2 text-right font-mono-numbers font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 dark:focus:ring-emerald-950 transition-all text-sm"
                   oninput="window.budgetApp.updateIncomeAmount('${item.id}', this.value)">
               </div>
 
               ${!isPrimary ? `
                 <button type="button" 
                   onclick="window.budgetApp.removeIncomeStream('${item.id}')"
-                  class="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                  class="p-2 text-slate-300 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
                   title="Remove this income stream">
                   <i class="fa-solid fa-trash-can text-sm"></i>
                 </button>
@@ -547,9 +658,6 @@ class BudgetApp {
     }
   }
 
-  /**
-   * Render Outflow / Expense Inputs
-   */
   renderExpensesSection() {
     const container = document.getElementById('expenseInputsContainer');
     if (!container) return;
@@ -560,22 +668,21 @@ class BudgetApp {
 
     let html = '';
 
-    // Render Preset Items that are active
+    // Render Preset Items
     for (const def of this.engine.presetDefinitions) {
       const entry = presets[def.id];
       const isActive = entry ? entry.active : def.defaultActive;
       const amount = entry && entry.amount !== undefined && entry.amount !== '' ? entry.amount : '';
 
       if (isActive) {
-        // Tag badge for classification
-        let badgeColor = 'bg-slate-100 text-slate-600 border-slate-200';
-        if (def.classification === 'need') badgeColor = 'bg-sky-50 text-sky-700 border-sky-200';
-        else if (def.classification === 'want') badgeColor = 'bg-pink-50 text-pink-700 border-pink-200';
-        else if (def.classification === 'saving') badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-        else if (def.classification === 'debt') badgeColor = 'bg-purple-50 text-purple-700 border-purple-200';
+        let badgeColor = 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
+        if (def.classification === 'need') badgeColor = 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/70 dark:text-sky-300 dark:border-sky-800';
+        else if (def.classification === 'want') badgeColor = 'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-950/70 dark:text-pink-300 dark:border-pink-800';
+        else if (def.classification === 'saving') badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-800';
+        else if (def.classification === 'debt') badgeColor = 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/70 dark:text-purple-300 dark:border-purple-800';
 
         html += `
-          <div class="expense-item group relative bg-white border border-slate-200/90 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-indigo-300 transition-all mb-3" data-preset-id="${def.id}">
+          <div class="expense-item group relative bg-white dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/80 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all mb-3" data-preset-id="${def.id}">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div class="flex items-center space-x-3 flex-1 min-w-0">
                 <div class="w-10 h-10 rounded-xl text-white flex items-center justify-center shrink-0 shadow-sm" style="background-color: ${def.color}">
@@ -583,16 +690,16 @@ class BudgetApp {
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center space-x-2">
-                    <span class="font-semibold text-slate-800 text-sm truncate">${def.name}</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-100 text-sm truncate">${def.name}</span>
                     <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${badgeColor}">${def.classification}</span>
                   </div>
-                  <div class="text-xs text-slate-400 truncate mt-0.5">${def.hint}</div>
+                  <div class="text-xs text-slate-400 dark:text-slate-400 truncate mt-0.5">${def.hint}</div>
                 </div>
               </div>
 
               <div class="flex items-center space-x-2 self-end sm:self-auto">
                 <div class="relative w-40 sm:w-44">
-                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm font-semibold pointer-events-none">
+                  <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 dark:text-slate-500 text-xs sm:text-sm font-semibold pointer-events-none">
                     ${this.currency}
                   </span>
                   <input type="number" 
@@ -600,13 +707,13 @@ class BudgetApp {
                     min="0"
                     value="${amount}" 
                     placeholder="0.00"
-                    class="w-full pl-9 pr-3 py-2 text-right font-mono-numbers font-semibold text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-sm"
+                    class="w-full pl-11 pr-3 py-2 text-right font-mono-numbers font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950 transition-all text-sm"
                     oninput="window.budgetApp.updatePresetAmount('${def.id}', this.value)">
                 </div>
 
                 <button type="button" 
                   onclick="window.budgetApp.togglePresetActive('${def.id}', false)"
-                  class="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                  class="p-2 text-slate-300 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
                   title="Remove this category from this month">
                   <i class="fa-solid fa-xmark text-sm"></i>
                 </button>
@@ -619,15 +726,15 @@ class BudgetApp {
 
     // Render Custom Items
     for (const custom of customList) {
-      let badgeColor = 'bg-pink-50 text-pink-700 border-pink-200';
-      if (custom.classification === 'need') badgeColor = 'bg-sky-50 text-sky-700 border-sky-200';
-      else if (custom.classification === 'debt') badgeColor = 'bg-purple-50 text-purple-700 border-purple-200';
-      else if (custom.classification === 'saving') badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      let badgeColor = 'bg-pink-50 text-pink-700 border-pink-200 dark:bg-pink-950/70 dark:text-pink-300 dark:border-pink-800';
+      if (custom.classification === 'need') badgeColor = 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/70 dark:text-sky-300 dark:border-sky-800';
+      else if (custom.classification === 'debt') badgeColor = 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/70 dark:text-purple-300 dark:border-purple-800';
+      else if (custom.classification === 'saving') badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-800';
 
       const amountVal = custom.amount !== undefined && custom.amount !== '' ? custom.amount : '';
 
       html += `
-        <div class="expense-item group relative bg-white border border-indigo-100/90 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-indigo-300 transition-all mb-3" data-custom-id="${custom.id}">
+        <div class="expense-item group relative bg-white dark:bg-slate-800/90 border border-indigo-100/90 dark:border-indigo-900/50 rounded-xl p-3.5 sm:p-4 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500/50 transition-all mb-3" data-custom-id="${custom.id}">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="flex items-center space-x-3 flex-1 min-w-0">
               <div class="w-10 h-10 rounded-xl text-white flex items-center justify-center shrink-0 shadow-sm" style="background-color: ${custom.color || '#6366f1'}">
@@ -635,17 +742,17 @@ class BudgetApp {
               </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center space-x-2">
-                  <span class="font-semibold text-slate-800 text-sm truncate">${custom.name}</span>
+                  <span class="font-semibold text-slate-800 dark:text-slate-100 text-sm truncate">${custom.name}</span>
                   <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${badgeColor}">${custom.classification}</span>
-                  <span class="text-[10px] text-indigo-500 bg-indigo-50 px-1 py-0.5 rounded font-medium">Custom</span>
+                  <span class="text-[10px] text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-1 py-0.5 rounded font-medium">Custom</span>
                 </div>
-                <div class="text-xs text-slate-400 truncate mt-0.5">User-defined custom expense</div>
+                <div class="text-xs text-slate-400 dark:text-slate-400 truncate mt-0.5">User-defined custom expense</div>
               </div>
             </div>
 
             <div class="flex items-center space-x-2 self-end sm:self-auto">
               <div class="relative w-40 sm:w-44">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-sm font-semibold pointer-events-none">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 dark:text-slate-500 text-xs sm:text-sm font-semibold pointer-events-none">
                   ${this.currency}
                 </span>
                 <input type="number" 
@@ -653,13 +760,13 @@ class BudgetApp {
                   min="0"
                   value="${amountVal}" 
                   placeholder="0.00"
-                  class="w-full pl-9 pr-3 py-2 text-right font-mono-numbers font-semibold text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all text-sm"
+                  class="w-full pl-11 pr-3 py-2 text-right font-mono-numbers font-semibold text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700 rounded-lg focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950 transition-all text-sm"
                   oninput="window.budgetApp.updateCustomAmount('${custom.id}', this.value)">
               </div>
 
               <button type="button" 
                 onclick="window.budgetApp.removeCustomExpense('${custom.id}')"
-                class="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                class="p-2 text-slate-300 dark:text-slate-500 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
                 title="Delete this custom expense">
                 <i class="fa-solid fa-trash-can text-sm"></i>
               </button>
@@ -692,14 +799,10 @@ class BudgetApp {
     }
   }
 
-  /**
-   * Recalculate metrics, update cards, advice, charts, and 50/30/20 bars
-   */
   recalculateAndRenderOverview() {
     const month = this.getCurrentMonthData();
     const result = this.engine.evaluate(month);
 
-    // Update Overview Cards
     const totalIncomeEl = document.getElementById('statTotalIncome');
     const totalExpensesEl = document.getElementById('statTotalExpenses');
     const balanceEl = document.getElementById('statBalance');
@@ -711,7 +814,6 @@ class BudgetApp {
     if (totalExpensesEl) totalExpensesEl.textContent = this.formatMoney(result.totalExpenses);
     if (balanceEl) balanceEl.textContent = this.formatMoney(Math.abs(result.balance));
 
-    // Expense rate subtext
     const expenseSubtext = document.getElementById('statExpenseSubtext');
     if (expenseSubtext) {
       if (result.totalIncome > 0) {
@@ -721,57 +823,46 @@ class BudgetApp {
       }
     }
 
-    // Inflow subtext
     const incomeSubtext = document.getElementById('statIncomeSubtext');
     if (incomeSubtext) {
       const count = (month.incomeList || []).length;
       incomeSubtext.textContent = `${count} income ${count === 1 ? 'stream' : 'streams'}`;
     }
 
-    // Balance status styling
     if (balanceCard && balanceBadge) {
       if (result.balance > 0) {
         balanceCard.className = 'glass-panel card-shadow rounded-2xl p-5 border-l-4 border-l-emerald-500 relative overflow-hidden';
-        balanceBadge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800';
+        balanceBadge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300';
         balanceBadge.innerHTML = `<i class="fa-solid fa-arrow-trend-up mr-1"></i> Surplus (+${result.savingsRate.toFixed(0)}% saved)`;
-        balanceEl.className = 'text-2xl sm:text-3xl font-bold font-mono-numbers text-emerald-600 mt-1';
+        balanceEl.className = 'text-2xl sm:text-3xl font-bold font-mono-numbers text-emerald-600 dark:text-emerald-400 mt-1';
       } else if (result.balance < 0) {
         balanceCard.className = 'glass-panel card-shadow rounded-2xl p-5 border-l-4 border-l-rose-500 relative overflow-hidden';
-        balanceBadge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800';
+        balanceBadge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300';
         balanceBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Deficit (Overbudget)`;
-        balanceEl.className = 'text-2xl sm:text-3xl font-bold font-mono-numbers text-rose-600 mt-1';
+        balanceEl.className = 'text-2xl sm:text-3xl font-bold font-mono-numbers text-rose-600 dark:text-rose-400 mt-1';
       } else {
         balanceCard.className = 'glass-panel card-shadow rounded-2xl p-5 border-l-4 border-l-slate-400 relative overflow-hidden';
-        balanceBadge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700';
+        balanceBadge.className = 'text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300';
         balanceBadge.innerHTML = `Zero Balance`;
-        balanceEl.className = 'text-2xl sm:text-3xl font-bold font-mono-numbers text-slate-700 mt-1';
+        balanceEl.className = 'text-2xl sm:text-3xl font-bold font-mono-numbers text-slate-700 dark:text-slate-300 mt-1';
       }
     }
 
-    // Financial Health Badge
     if (healthBadge) {
       healthBadge.innerHTML = `
         <span class="w-2.5 h-2.5 rounded-full mr-2" style="background-color: ${result.health.color}"></span>
         <span>Score: <strong>${result.health.score}/100</strong> (${result.health.label})</span>
       `;
-      healthBadge.className = `inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full border ${result.health.bgBadge}`;
+      healthBadge.className = `inline-flex items-center text-xs font-semibold px-3 py-1 rounded-full border ${result.health.bgBadge} dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200`;
     }
 
-    // Render Smart Suggestions / Feedback list
     this.renderSuggestions(result.suggestions);
-
-    // Update 50/30/20 Rule Bars
     this.render503020Rule(result.rule503020);
-
-    // Update Charts
     this.charts.updateDonutChart('expenseDonutChart', result.allExpenses, this.currency);
     this.charts.updateFlowBarChart('cashFlowBarChart', result.totalIncome, result.totalExpenses, result.balance, this.currency);
     this.renderDonutLegend(result.allExpenses);
   }
 
-  /**
-   * Render Smart Financial Advisor Suggestions
-   */
   renderSuggestions(suggestions) {
     const container = document.getElementById('suggestionsContainer');
     const countBadge = document.getElementById('suggestionsCountBadge');
@@ -783,7 +874,7 @@ class BudgetApp {
 
     if (suggestions.length === 0) {
       container.innerHTML = `
-        <div class="text-center py-8 text-slate-400">
+        <div class="text-center py-8 text-slate-400 dark:text-slate-500">
           <i class="fa-solid fa-check-double text-3xl text-emerald-400 mb-2"></i>
           <p class="text-sm font-medium">All financial metrics look balanced.</p>
         </div>
@@ -792,22 +883,22 @@ class BudgetApp {
     }
 
     container.innerHTML = suggestions.map(s => {
-      let cardStyle = 'border-l-sky-500 bg-sky-50/40 text-sky-950 border-sky-200';
-      let iconColor = 'text-sky-500';
-      let badgeStyle = 'bg-sky-100 text-sky-800';
+      let cardStyle = 'border-l-sky-500 bg-sky-50/50 dark:bg-sky-950/30 text-sky-950 dark:text-sky-100 border-sky-200 dark:border-sky-800/60';
+      let iconColor = 'text-sky-500 dark:text-sky-400';
+      let badgeStyle = 'bg-sky-100 dark:bg-sky-900/60 text-sky-800 dark:text-sky-200';
 
       if (s.type === 'danger') {
-        cardStyle = 'border-l-rose-500 bg-rose-50/50 text-rose-950 border-rose-200';
-        iconColor = 'text-rose-500';
-        badgeStyle = 'bg-rose-100 text-rose-800 font-bold';
+        cardStyle = 'border-l-rose-500 bg-rose-50/60 dark:bg-rose-950/30 text-rose-950 dark:text-rose-100 border-rose-200 dark:border-rose-800/60';
+        iconColor = 'text-rose-500 dark:text-rose-400';
+        badgeStyle = 'bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 font-bold';
       } else if (s.type === 'warning') {
-        cardStyle = 'border-l-amber-500 bg-amber-50/50 text-amber-950 border-amber-200';
-        iconColor = 'text-amber-500';
-        badgeStyle = 'bg-amber-100 text-amber-800 font-semibold';
+        cardStyle = 'border-l-amber-500 bg-amber-50/60 dark:bg-amber-950/30 text-amber-950 dark:text-amber-100 border-amber-200 dark:border-amber-800/60';
+        iconColor = 'text-amber-500 dark:text-amber-400';
+        badgeStyle = 'bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 font-semibold';
       } else if (s.type === 'success') {
-        cardStyle = 'border-l-emerald-500 bg-emerald-50/50 text-emerald-950 border-emerald-200';
-        iconColor = 'text-emerald-500';
-        badgeStyle = 'bg-emerald-100 text-emerald-800 font-semibold';
+        cardStyle = 'border-l-emerald-500 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-950 dark:text-emerald-100 border-emerald-200 dark:border-emerald-800/60';
+        iconColor = 'text-emerald-500 dark:text-emerald-400';
+        badgeStyle = 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 font-semibold';
       }
 
       return `
@@ -818,10 +909,10 @@ class BudgetApp {
             </div>
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between gap-2 mb-1">
-                <h4 class="font-bold text-sm text-slate-800">${s.title}</h4>
+                <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100">${s.title}</h4>
                 <span class="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full ${badgeStyle}">${s.badge}</span>
               </div>
-              <p class="text-xs text-slate-600 leading-relaxed">${s.message}</p>
+              <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">${s.message}</p>
             </div>
           </div>
         </div>
@@ -829,9 +920,6 @@ class BudgetApp {
     }).join('');
   }
 
-  /**
-   * Render 50/30/20 Rule visual bars
-   */
   render503020Rule(rule) {
     const needsPct = Math.min(100, Math.round(rule.needs.rate));
     const wantsPct = Math.min(100, Math.round(rule.wants.rate));
@@ -854,9 +942,6 @@ class BudgetApp {
     if (savingsVal) savingsVal.textContent = `${savingsPct}% (Ideal: ≥20%)`;
   }
 
-  /**
-   * Render Custom HTML Legend for the Donut Chart
-   */
   renderDonutLegend(items) {
     const legendContainer = document.getElementById('donutChartLegend');
     if (!legendContainer) return;
@@ -865,20 +950,20 @@ class BudgetApp {
     const total = activeItems.reduce((sum, i) => sum + i.amount, 0);
 
     if (activeItems.length === 0) {
-      legendContainer.innerHTML = `<div class="text-xs text-slate-400 py-3 text-center">No expenses recorded yet.</div>`;
+      legendContainer.innerHTML = `<div class="text-xs text-slate-400 dark:text-slate-500 py-3 text-center">No expenses recorded yet.</div>`;
       return;
     }
 
     legendContainer.innerHTML = activeItems.map(item => {
       const pct = total > 0 ? ((item.amount / total) * 100).toFixed(1) : 0;
       return `
-        <div class="flex items-center justify-between text-xs py-1.5 border-b border-slate-100 last:border-none">
+        <div class="flex items-center justify-between text-xs py-1.5 border-b border-slate-100 dark:border-slate-800 last:border-none">
           <div class="flex items-center space-x-2 truncate pr-2">
             <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${item.color}"></span>
-            <span class="font-medium text-slate-700 truncate">${item.name}</span>
+            <span class="font-medium text-slate-700 dark:text-slate-300 truncate">${item.name}</span>
           </div>
-          <div class="font-mono-numbers text-slate-600 font-semibold shrink-0">
-            ${this.formatMoney(item.amount)} <span class="text-slate-400 text-[10px]">(${pct}%)</span>
+          <div class="font-mono-numbers text-slate-600 dark:text-slate-300 font-semibold shrink-0">
+            ${this.formatMoney(item.amount)} <span class="text-slate-400 dark:text-slate-500 text-[10px]">(${pct}%)</span>
           </div>
         </div>
       `;
@@ -886,7 +971,6 @@ class BudgetApp {
   }
 }
 
-// Bootstrap on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
   window.budgetApp = new BudgetApp();
 });
