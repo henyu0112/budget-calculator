@@ -78,13 +78,24 @@
           </button>
         </div>
 
-        <!-- Right Quick Controls: Desktop (Currency & Theme) and Mobile Drawer Toggle -->
-        <div class="flex items-center space-x-2 shrink-0">
+        <!-- Right Quick Controls: Desktop (Calculator, Currency & Theme) and Mobile (Calculator & Drawer Toggle) -->
+        <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
           
+          <!-- Mobile Calculator Quick Button (Visible only on < lg) -->
+          <button id="mobileCalculatorBtn" type="button" class="lg:hidden inline-flex items-center justify-center p-2 sm:px-2.5 sm:py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-sm transition-all cursor-pointer" title="Quick Calculator" aria-label="Open Calculator">
+            <i class="fa-solid fa-calculator text-xs text-indigo-600 dark:text-indigo-400"></i>
+          </button>
+
           <!-- Mobile Drawer Toggle Button (Visible only on < lg) -->
           <button id="mobileDrawerToggleBtn" type="button" class="lg:hidden inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-2 text-xs font-semibold rounded-xl bg-indigo-50 dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-slate-700 border border-indigo-200/80 dark:border-slate-700 shadow-sm transition-all" title="Open Budget Tools & Settings Drawer">
             <i class="fa-solid fa-bars-staggered text-sm"></i>
             <span class="hidden sm:inline">Menu</span>
+          </button>
+
+          <!-- Desktop Calculator Button (Visible only on >= lg) -->
+          <button id="calculatorToggleBtn" type="button" class="hidden lg:inline-flex items-center space-x-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-sm transition-all cursor-pointer" title="Open Quick Calculator">
+            <i class="fa-solid fa-calculator text-indigo-600 dark:text-indigo-400"></i>
+            <span>Calculator</span>
           </button>
 
           <!-- Desktop Currency Selector (Visible only on >= lg) -->
@@ -559,9 +570,20 @@
 
       <!-- Section: Budget Actions -->
       <div>
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-2">Monthly Actions</span>
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block mb-2">Tools & Actions</span>
         <div class="space-y-2">
           
+          <!-- Quick Calculator -->
+          <button id="drawerCalculatorBtn" type="button" class="w-full flex items-center space-x-3 p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/80 transition-all text-left cursor-pointer">
+            <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <i class="fa-solid fa-calculator text-xs"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold">Quick Calculator</div>
+              <div class="text-[10px] text-indigo-600/80 dark:text-indigo-300/80">Sum category expenses on the fly</div>
+            </div>
+          </button>
+
           <!-- Load Demo -->
           <button id="drawerLoadDemoBtn" type="button" class="w-full flex items-center space-x-3 p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/80 transition-all text-left">
             <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm">
@@ -691,6 +713,97 @@
           Done
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- FLOATING QUICK CALCULATOR BUTTON -->
+  <button id="floatingCalculatorBtn" type="button" class="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white shadow-xl shadow-indigo-500/35 flex items-center justify-center transition-all focus:outline-none print:hidden group cursor-pointer" title="Quick Calculator (Sum category expenses)" aria-label="Open Quick Calculator">
+    <i class="fa-solid fa-calculator text-base transition-transform group-hover:scale-110"></i>
+  </button>
+
+  <!-- MODAL: QUICK CALCULATOR -->
+  <div id="calculatorModal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-4">
+    <!-- Backdrop -->
+    <div id="calculatorBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+
+    <!-- Calculator Dialog Box -->
+    <div class="relative bg-white dark:bg-slate-900 rounded-3xl max-w-xs sm:max-w-sm w-full p-4 sm:p-5 shadow-2xl z-10 flex flex-col border border-slate-200/80 dark:border-slate-800 animate-fade-in select-none">
+      
+      <!-- Calculator Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm shadow-sm">
+            <i class="fa-solid fa-calculator"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-900 dark:text-white text-sm">Quick Calculator</h3>
+            <p class="text-[11px] text-slate-400 dark:text-slate-500">Sum category expenses on the fly</p>
+          </div>
+        </div>
+        <button id="closeCalculatorBtn" type="button" class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="Close calculator">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- Calculator Display Screen -->
+      <div class="my-3.5 bg-slate-100/90 dark:bg-slate-950/80 rounded-2xl p-3 sm:p-3.5 border border-slate-200/80 dark:border-slate-800/80 shadow-inner text-right">
+        <!-- Expression History (e.g. 15.5 + 40 =) -->
+        <div id="calcHistory" class="text-xs font-mono-numbers text-slate-400 dark:text-slate-500 min-h-[1.25rem] truncate overflow-x-auto no-scrollbar"></div>
+        <!-- Current Value / Main Display -->
+        <div id="calcDisplay" class="text-2xl sm:text-3xl font-extrabold font-mono-numbers text-slate-900 dark:text-white tracking-tight truncate">0</div>
+      </div>
+
+      <!-- Result Action Bar (Quick Copy Result) -->
+      <div class="flex items-center justify-between mb-3 px-1">
+        <span class="text-[11px] text-slate-400 dark:text-slate-500 flex items-center">
+          <i class="fa-regular fa-lightbulb text-amber-500 mr-1.5 text-xs"></i>
+          <span>Add costs for same category</span>
+        </span>
+        <button id="calcCopyResultBtn" type="button" class="inline-flex items-center space-x-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900 border border-indigo-200/70 dark:border-indigo-800/70 transition-all cursor-pointer shadow-sm active:scale-95" title="Copy calculated sum to clipboard">
+          <i id="calcCopyIcon" class="fa-regular fa-copy text-xs"></i>
+          <span id="calcCopyText">Copy Result</span>
+        </button>
+      </div>
+
+      <!-- Keypad Grid (4 columns) -->
+      <div id="calculatorKeypad" class="grid grid-cols-4 gap-2 text-sm sm:text-base font-semibold">
+        <!-- Row 1: Clear, Backspace, %, / -->
+        <button type="button" data-calc-action="clear" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 active:scale-95 transition-all shadow-sm touch-manipulation cursor-pointer">C</button>
+        <button type="button" data-calc-action="backspace" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all shadow-sm touch-manipulation cursor-pointer"><i class="fa-solid fa-delete-left"></i></button>
+        <button type="button" data-calc-action="percent" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-95 transition-all shadow-sm touch-manipulation cursor-pointer">%</button>
+        <button type="button" data-calc-action="operator" data-val="/" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 active:scale-95 transition-all shadow-sm touch-manipulation cursor-pointer">÷</button>
+
+        <!-- Row 2: 7, 8, 9, * -->
+        <button type="button" data-calc-num="7" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all border border-slate-200/60 dark:border-slate-700/60 shadow-sm font-mono-numbers touch-manipulation cursor-pointer">7</button>
+        <button type="button" data-calc-num="8" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all border border-slate-200/60 dark:border-slate-700/60 shadow-sm font-mono-numbers touch-manipulation cursor-pointer">8</button>
+        <button type="button" data-calc-num="9" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all border border-slate-200/60 dark:border-slate-700/60 shadow-sm font-mono-numbers touch-manipulation cursor-pointer">9</button>
+        <button type="button" data-calc-action="operator" data-val="*" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 active:scale-95 transition-all shadow-sm touch-manipulation cursor-pointer">×</button>
+
+        <!-- Row 3: 4, 5, 6, - -->
+        <button type="button" data-calc-num="4" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all border border-slate-200/60 dark:border-slate-700/60 shadow-sm font-mono-numbers touch-manipulation cursor-pointer">4</button>
+        <button type="button" data-calc-num="5" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all border border-slate-200/60 dark:border-slate-700/60 shadow-sm font-mono-numbers touch-manipulation cursor-pointer">5</button>
+        <button type="button" data-calc-num="6" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all border border-slate-200/60 dark:border-slate-700/60 shadow-sm font-mono-numbers touch-manipulation cursor-pointer">6</button>
+        <button type="button" data-calc-action="operator" data-val="-" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 active:scale-95 transition-all shadow-sm touch-manipulation cursor-pointer">−</button>
+
+        <!-- Row 4: 1, 2, 3, + -->
+        <button type="button" data-calc-num="1" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all border border-slate-200/60 dark:border-slate-700/60 shadow-sm font-mono-numbers touch-manipulation cursor-pointer">1</button>
+        <button type="button" data-calc-num="2" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all border border-slate-200/60 dark:border-slate-700/60 shadow-sm font-mono-numbers touch-manipulation cursor-pointer">2</button>
+        <button type="button" data-calc-num="3" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all border border-slate-200/60 dark:border-slate-700/60 shadow-sm font-mono-numbers touch-manipulation cursor-pointer">3</button>
+        <button type="button" data-calc-action="operator" data-val="+" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 active:scale-95 transition-all shadow-sm touch-manipulation cursor-pointer">+</button>
+
+        <!-- Row 5: 0, 00, ., = -->
+        <button type="button" data-calc-num="0" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all border border-slate-200/60 dark:border-slate-700/60 shadow-sm font-mono-numbers touch-manipulation cursor-pointer">0</button>
+        <button type="button" data-calc-num="00" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all border border-slate-200/60 dark:border-slate-700/60 shadow-sm font-mono-numbers touch-manipulation cursor-pointer">00</button>
+        <button type="button" data-calc-action="decimal" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition-all border border-slate-200/60 dark:border-slate-700/60 shadow-sm font-mono-numbers touch-manipulation cursor-pointer">.</button>
+        <button type="button" data-calc-action="equals" class="calc-btn py-3 sm:py-3.5 rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-500 hover:from-indigo-500 hover:to-emerald-400 text-white font-bold active:scale-95 transition-all shadow-md shadow-indigo-300 dark:shadow-none touch-manipulation cursor-pointer">=</button>
+      </div>
+
+      <!-- Quick keyboard helper hint on desktop -->
+      <div class="hidden sm:flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 dark:text-slate-500">
+        <span>Keys: 0-9, <kbd class="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">+</kbd> <kbd class="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">-</kbd> <kbd class="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">*</kbd> <kbd class="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">/</kbd> <kbd class="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">Enter</kbd></span>
+        <span><kbd class="px-1 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">Esc</kbd> to close</span>
+      </div>
+
     </div>
   </div>
 

@@ -2,12 +2,235 @@
  * Budget Manager - Application Logic & UI Controller
  */
 
+class BudgetCalculator {
+  constructor(app) {
+    this.app = app;
+    this.currentInput = '0';
+    this.previousInput = null;
+    this.operator = null;
+    this.historyText = '';
+    this.shouldResetInput = false;
+    this.isOpen = false;
+  }
+
+  open() {
+    this.isOpen = true;
+    const modal = document.getElementById('calculatorModal');
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    this.updateDisplay();
+  }
+
+  close() {
+    this.isOpen = false;
+    const modal = document.getElementById('calculatorModal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+  }
+
+  toggle() {
+    if (this.isOpen) {
+      this.close();
+    } else {
+      this.open();
+    }
+  }
+
+  inputDigit(digit) {
+    if (this.shouldResetInput || this.currentInput === 'Error') {
+      this.currentInput = digit === '00' ? '0' : digit;
+      this.shouldResetInput = false;
+    } else {
+      if (this.currentInput === '0') {
+        if (digit === '00') return;
+        this.currentInput = digit;
+      } else {
+        if (this.currentInput.length >= 14) return;
+        this.currentInput += digit;
+      }
+    }
+    this.updateDisplay();
+  }
+
+  inputDecimal() {
+    if (this.shouldResetInput || this.currentInput === 'Error') {
+      this.currentInput = '0.';
+      this.shouldResetInput = false;
+      this.updateDisplay();
+      return;
+    }
+    if (!this.currentInput.includes('.')) {
+      this.currentInput += '.';
+      this.updateDisplay();
+    }
+  }
+
+  inputOperator(op) {
+    if (this.currentInput === 'Error') return;
+    const curVal = parseFloat(this.currentInput);
+    if (isNaN(curVal)) return;
+
+    if (this.operator && !this.shouldResetInput) {
+      this.calculate();
+    }
+
+    this.previousInput = parseFloat(this.currentInput);
+    this.operator = op;
+    this.shouldResetInput = true;
+
+    const symbolMap = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+    this.historyText = `${this.previousInput} ${symbolMap[op] || op}`;
+    this.updateDisplay();
+  }
+
+  calculate() {
+    if (this.operator === null || this.previousInput === null) return;
+    const prev = this.previousInput;
+    const current = parseFloat(this.currentInput);
+    if (isNaN(current)) return;
+
+    let result = 0;
+    switch (this.operator) {
+      case '+':
+        result = prev + current;
+        break;
+      case '-':
+        result = prev - current;
+        break;
+      case '*':
+        result = prev * current;
+        break;
+      case '/':
+        if (current === 0) {
+          this.currentInput = 'Error';
+          this.previousInput = null;
+          this.operator = null;
+          this.historyText = 'Cannot divide by 0';
+          this.shouldResetInput = true;
+          this.updateDisplay();
+          return;
+        }
+        result = prev / current;
+        break;
+      default:
+        return;
+    }
+
+    // Clean floating point precision (e.g. 0.1 + 0.2 = 0.3)
+    const rounded = Math.round((result + Number.EPSILON) * 100000000) / 100000000;
+    const symbolMap = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+    this.historyText = `${prev} ${symbolMap[this.operator] || this.operator} ${current} =`;
+    this.currentInput = String(rounded);
+    this.operator = null;
+    this.previousInput = null;
+    this.shouldResetInput = true;
+    this.updateDisplay();
+  }
+
+  inputPercent() {
+    if (this.currentInput === 'Error') return;
+    const current = parseFloat(this.currentInput);
+    if (isNaN(current)) return;
+    if (this.previousInput !== null && (this.operator === '+' || this.operator === '-')) {
+      const pct = (this.previousInput * current) / 100;
+      this.currentInput = String(Math.round((pct + Number.EPSILON) * 100000000) / 100000000);
+    } else {
+      this.currentInput = String(Math.round((current / 100 + Number.EPSILON) * 100000000) / 100000000);
+    }
+    this.updateDisplay();
+  }
+
+  backspace() {
+    if (this.shouldResetInput || this.currentInput === 'Error') {
+      this.clear();
+      return;
+    }
+    if (this.currentInput.length <= 1) {
+      this.currentInput = '0';
+    } else {
+      this.currentInput = this.currentInput.slice(0, -1);
+    }
+    this.updateDisplay();
+  }
+
+  clear() {
+    this.currentInput = '0';
+    this.previousInput = null;
+    this.operator = null;
+    this.historyText = '';
+    this.shouldResetInput = false;
+    this.updateDisplay();
+  }
+
+  copyResult() {
+    const val = this.currentInput === 'Error' ? '0' : this.currentInput;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(val)
+        .then(() => this.showCopyFeedback())
+        .catch(() => this.fallbackCopy(val));
+    } else {
+      this.fallbackCopy(val);
+    }
+  }
+
+  fallbackCopy(text) {
+    const el = document.createElement('textarea');
+    el.value = text;
+    el.setAttribute('readonly', '');
+    el.style.position = 'absolute';
+    el.style.left = '-9999px';
+    document.body.appendChild(el);
+    el.select();
+    try {
+      document.execCommand('copy');
+      this.showCopyFeedback();
+    } catch (e) {
+      console.warn('Copy fallback failed', e);
+    }
+    document.body.removeChild(el);
+  }
+
+  showCopyFeedback() {
+    const textEl = document.getElementById('calcCopyText');
+    const iconEl = document.getElementById('calcCopyIcon');
+    const btn = document.getElementById('calcCopyResultBtn');
+    if (textEl && iconEl && btn) {
+      textEl.textContent = 'Copied!';
+      iconEl.className = 'fa-solid fa-check text-emerald-500 text-xs';
+      btn.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-300', 'dark:bg-emerald-950/80', 'dark:text-emerald-300');
+      btn.classList.remove('bg-indigo-50', 'text-indigo-700', 'border-indigo-200/70', 'dark:bg-indigo-950/80', 'dark:text-indigo-300');
+      setTimeout(() => {
+        textEl.textContent = 'Copy Result';
+        iconEl.className = 'fa-regular fa-copy text-xs';
+        btn.classList.remove('bg-emerald-50', 'text-emerald-700', 'border-emerald-300', 'dark:bg-emerald-950/80', 'dark:text-emerald-300');
+        btn.classList.add('bg-indigo-50', 'text-indigo-700', 'border-indigo-200/70', 'dark:bg-indigo-950/80', 'dark:text-indigo-300');
+      }, 1800);
+    }
+  }
+
+  updateDisplay() {
+    const displayEl = document.getElementById('calcDisplay');
+    const historyEl = document.getElementById('calcHistory');
+    if (displayEl) {
+      displayEl.textContent = this.currentInput;
+    }
+    if (historyEl) {
+      historyEl.textContent = this.historyText;
+    }
+  }
+}
+
 class BudgetApp {
   constructor() {
     this.storageKey = 'budget_manager_v1';
     this.themeStorageKey = 'budget_manager_theme';
     this.engine = new window.BudgetEngine();
     this.charts = new window.BudgetCharts();
+    this.calculator = new BudgetCalculator(this);
     this.listenersAttached = false;
     
     // Default current month format: YYYY-MM
@@ -425,6 +648,79 @@ class BudgetApp {
     document.getElementById('drawerClearAllBtn')?.addEventListener('click', () => {
       this.toggleMobileDrawer(false);
       document.getElementById('clearAllDataBtn')?.click();
+    });
+
+    // Calculator Launchers (Desktop header, Mobile header, Floating button, Side drawer)
+    const openCalc = () => this.calculator.open();
+    document.getElementById('calculatorToggleBtn')?.addEventListener('click', openCalc);
+    document.getElementById('mobileCalculatorBtn')?.addEventListener('click', openCalc);
+    document.getElementById('floatingCalculatorBtn')?.addEventListener('click', openCalc);
+    document.getElementById('drawerCalculatorBtn')?.addEventListener('click', () => {
+      this.toggleMobileDrawer(false);
+      this.calculator.open();
+    });
+
+    // Calculator Close
+    const closeCalc = () => this.calculator.close();
+    document.getElementById('closeCalculatorBtn')?.addEventListener('click', closeCalc);
+    document.getElementById('calculatorBackdrop')?.addEventListener('click', closeCalc);
+
+    // Calculator Copy Result Button
+    document.getElementById('calcCopyResultBtn')?.addEventListener('click', () => {
+      this.calculator.copyResult();
+    });
+
+    // Calculator Keypad Click Handler
+    const keypad = document.getElementById('calculatorKeypad');
+    keypad?.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+
+      const num = btn.getAttribute('data-calc-num');
+      if (num !== null) {
+        this.calculator.inputDigit(num);
+        return;
+      }
+
+      const action = btn.getAttribute('data-calc-action');
+      if (action === 'clear') {
+        this.calculator.clear();
+      } else if (action === 'backspace') {
+        this.calculator.backspace();
+      } else if (action === 'percent') {
+        this.calculator.inputPercent();
+      } else if (action === 'decimal') {
+        this.calculator.inputDecimal();
+      } else if (action === 'operator') {
+        const op = btn.getAttribute('data-val');
+        if (op) this.calculator.inputOperator(op);
+      } else if (action === 'equals') {
+        this.calculator.calculate();
+      }
+    });
+
+    // Global Keyboard Listeners for Calculator
+    window.addEventListener('keydown', (e) => {
+      if (!this.calculator.isOpen) return;
+
+      if (e.key >= '0' && e.key <= '9') {
+        this.calculator.inputDigit(e.key);
+      } else if (e.key === '.') {
+        this.calculator.inputDecimal();
+      } else if (['+', '-', '*', '/'].includes(e.key)) {
+        this.calculator.inputOperator(e.key);
+      } else if (e.key === 'Enter' || e.key === '=') {
+        e.preventDefault();
+        this.calculator.calculate();
+      } else if (e.key === 'Backspace') {
+        this.calculator.backspace();
+      } else if (e.key === 'Escape') {
+        this.calculator.close();
+      } else if (e.key === 'c' || e.key === 'C') {
+        this.calculator.clear();
+      } else if (e.key === '%') {
+        this.calculator.inputPercent();
+      }
     });
 
     // Mobile Segmented Tab Navigation
@@ -1263,6 +1559,9 @@ class BudgetApp {
     }).join('');
   }
 }
+
+window.BudgetCalculator = BudgetCalculator;
+window.BudgetApp = BudgetApp;
 
 document.addEventListener('DOMContentLoaded', () => {
   window.budgetApp = new BudgetApp();
