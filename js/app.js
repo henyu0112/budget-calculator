@@ -54,6 +54,8 @@ class BudgetApp {
     const htmlEl = document.documentElement;
     const themeIcon = document.getElementById('themeToggleIcon');
     const themeText = document.getElementById('themeToggleText');
+    const drawerThemeIcon = document.getElementById('drawerThemeToggleIcon');
+    const drawerThemeText = document.getElementById('drawerThemeToggleText');
 
     if (theme === 'dark') {
       htmlEl.classList.add('dark');
@@ -63,6 +65,12 @@ class BudgetApp {
       if (themeText) {
         themeText.textContent = 'Light';
       }
+      if (drawerThemeIcon) {
+        drawerThemeIcon.className = 'fa-solid fa-sun text-amber-400 text-sm';
+      }
+      if (drawerThemeText) {
+        drawerThemeText.textContent = 'Light';
+      }
     } else {
       htmlEl.classList.remove('dark');
       if (themeIcon) {
@@ -70,6 +78,12 @@ class BudgetApp {
       }
       if (themeText) {
         themeText.textContent = 'Dark';
+      }
+      if (drawerThemeIcon) {
+        drawerThemeIcon.className = 'fa-solid fa-moon text-slate-600 text-sm';
+      }
+      if (drawerThemeText) {
+        drawerThemeText.textContent = 'Dark';
       }
     }
   }
@@ -162,15 +176,38 @@ class BudgetApp {
 
   renderCurrencySelector() {
     const select = document.getElementById('currencySelector');
-    if (!select) return;
-    select.innerHTML = this.currencies.map(c => 
+    const drawerSelect = document.getElementById('drawerCurrencySelector');
+    const optionsHtml = this.currencies.map(c => 
       `<option value="${c.symbol}" ${c.symbol === this.currency ? 'selected' : ''}>${c.name}</option>`
     ).join('');
+
+    if (select) select.innerHTML = optionsHtml;
+    if (drawerSelect) drawerSelect.innerHTML = optionsHtml;
 
     // Update any static currency label in the DOM
     document.querySelectorAll('.currency-label-display').forEach(el => {
       el.textContent = this.currency;
     });
+  }
+
+  toggleMobileDrawer(open) {
+    const drawer = document.getElementById('mobileSideDrawer');
+    const backdrop = document.getElementById('mobileDrawerBackdrop');
+    if (!drawer || !backdrop) return;
+
+    if (open) {
+      backdrop.classList.remove('opacity-0', 'pointer-events-none');
+      backdrop.classList.add('opacity-100', 'pointer-events-auto');
+      drawer.classList.remove('translate-x-full');
+      drawer.classList.add('translate-x-0');
+      document.body.style.overflow = 'hidden';
+    } else {
+      backdrop.classList.add('opacity-0', 'pointer-events-none');
+      backdrop.classList.remove('opacity-100', 'pointer-events-auto');
+      drawer.classList.add('translate-x-full');
+      drawer.classList.remove('translate-x-0');
+      document.body.style.overflow = '';
+    }
   }
 
   renderMonthSelector() {
@@ -328,6 +365,66 @@ class BudgetApp {
         this.renderMonthSelector();
         this.renderAll();
       }
+    });
+
+    // Mobile side drawer controls
+    document.getElementById('mobileDrawerToggleBtn')?.addEventListener('click', () => this.toggleMobileDrawer(true));
+    document.getElementById('closeMobileDrawerBtn')?.addEventListener('click', () => this.toggleMobileDrawer(false));
+    document.getElementById('mobileDrawerBackdrop')?.addEventListener('click', () => this.toggleMobileDrawer(false));
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.toggleMobileDrawer(false);
+      }
+    });
+
+    // Drawer Theme Toggle
+    document.getElementById('drawerThemeToggleBtn')?.addEventListener('click', () => {
+      this.toggleTheme();
+    });
+
+    // Drawer Currency Selector
+    document.getElementById('drawerCurrencySelector')?.addEventListener('change', (e) => {
+      this.currency = e.target.value;
+      this.saveToStorage();
+      this.renderCurrencySelector();
+      this.renderAll();
+    });
+
+    // Drawer Quick Actions (Execute & auto-close drawer)
+    document.getElementById('drawerLoadDemoBtn')?.addEventListener('click', () => {
+      this.loadDemoData();
+      this.toggleMobileDrawer(false);
+    });
+
+    document.getElementById('drawerCopyPrevMonthBtn')?.addEventListener('click', () => {
+      this.copyFromPreviousMonth();
+      this.toggleMobileDrawer(false);
+    });
+
+    document.getElementById('drawerResetMonthBtn')?.addEventListener('click', () => {
+      this.resetCurrentMonth();
+      this.toggleMobileDrawer(false);
+    });
+
+    document.getElementById('drawerExportBtn')?.addEventListener('click', () => {
+      this.exportData();
+      this.toggleMobileDrawer(false);
+    });
+
+    document.getElementById('drawerImportBtn')?.addEventListener('click', () => {
+      this.toggleMobileDrawer(false);
+      document.getElementById('importFileInput')?.click();
+    });
+
+    document.getElementById('drawerPrintBtn')?.addEventListener('click', () => {
+      this.toggleMobileDrawer(false);
+      setTimeout(() => window.print(), 250);
+    });
+
+    document.getElementById('drawerClearAllBtn')?.addEventListener('click', () => {
+      this.toggleMobileDrawer(false);
+      document.getElementById('clearAllDataBtn')?.click();
     });
 
     // Mobile Segmented Tab Navigation
